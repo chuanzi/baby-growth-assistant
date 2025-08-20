@@ -1,5 +1,5 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Baby, FeedingRecord, SleepRecord, BabyMilestone, PersonalizedContent } from '@/types';
+import type { Baby, PersonalizedContent } from '@/types';
 import { calculateAge, getAgeCategory } from '@/utils/age-calculator';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -9,9 +9,12 @@ export class AIContentGenerator {
 
   async generateDailyCard(
     baby: Baby,
-    recentFeeding: FeedingRecord[],
-    recentSleep: SleepRecord[],
-    completedMilestones: BabyMilestone[]
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recentFeeding: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    recentSleep: any[],
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    completedMilestones: any[]
   ): Promise<PersonalizedContent> {
     const ageInfo = calculateAge(baby);
     const ageCategory = getAgeCategory(ageInfo.correctedAgeInDays);

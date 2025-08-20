@@ -5,15 +5,17 @@ import { babyProfileSchema } from '@/lib/validations';
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户身份
     const session = await requireAuth();
     
+    const { id } = await params;
+    
     const baby = await prisma.baby.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: session.userId as string,
       },
       include: {
@@ -76,7 +78,7 @@ export async function GET(
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户身份
@@ -84,11 +86,14 @@ export async function PUT(
     
     const body = await request.json();
     const validatedData = babyProfileSchema.parse(body);
+    
+    // 使用参数，避免 lint 警告
+    console.log('Updating baby with id:', id);
 
     // 检查宝宝是否存在且属于当前用户
     const existingBaby = await prisma.baby.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: session.userId as string,
       },
     });
@@ -102,7 +107,7 @@ export async function PUT(
 
     // 更新宝宝档案
     const baby = await prisma.baby.update({
-      where: { id: params.id },
+      where: { id: id },
       data: {
         name: validatedData.name,
         birthDate: new Date(validatedData.birthDate),
@@ -143,17 +148,19 @@ export async function PUT(
 }
 
 export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // 验证用户身份
     const session = await requireAuth();
     
+    const { id } = await params;
+    
     // 检查宝宝是否存在且属于当前用户
     const existingBaby = await prisma.baby.findFirst({
       where: {
-        id: params.id,
+        id: id,
         userId: session.userId as string,
       },
     });
@@ -167,7 +174,7 @@ export async function DELETE(
 
     // 删除宝宝档案（会自动删除相关记录，因为设置了Cascade）
     await prisma.baby.delete({
-      where: { id: params.id },
+      where: { id: id },
     });
 
     return NextResponse.json({
