@@ -1,6 +1,7 @@
 export interface User {
   id: string;
-  phone: string;
+  phone?: string | null; // 可选，支持邮箱注册用户
+  email?: string | null; // 邮箱登录
   createdAt: Date;
   updatedAt: Date;
 }

@@ -33,6 +33,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       id: user.id,
       phone: user.phone,
+      email: user.email,
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
       babies: user.babies,

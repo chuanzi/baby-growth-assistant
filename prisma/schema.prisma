@@ -12,10 +12,16 @@ datasource db {
 
 model User {
   id        String   @id @default(cuid())
-  phone     String   @unique
+  phone     String?  @unique // 可选，支持邮箱注册用户
+  email     String?  @unique // 邮箱登录
+  password  String?  // 密码哈希，仅邮箱用户使用
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   babies    Baby[]
+
+  // 确保用户至少有一种认证方式
+  @@index([phone])
+  @@index([email])
 }
 
 model Baby {

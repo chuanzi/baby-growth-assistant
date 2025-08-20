@@ -2,9 +2,10 @@ import { z } from 'zod';
 
 // 手机号验证正则
 const phoneRegex = /^1[3-9]\d{9}$/;
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
-// 登录表单验证
-export const loginSchema = z.object({
+// 手机登录表单验证
+export const phoneLoginSchema = z.object({
   phone: z
     .string()
     .min(1, '请输入手机号')
@@ -16,8 +17,22 @@ export const loginSchema = z.object({
     .regex(/^\d+$/, '验证码只能包含数字'),
 });
 
-// 注册表单验证
-export const registerSchema = z.object({
+// 邮箱登录表单验证
+export const emailLoginSchema = z.object({
+  email: z
+    .string()
+    .min(1, '请输入邮箱地址')
+    .regex(emailRegex, '请输入正确的邮箱格式')
+    .toLowerCase(),
+  password: z
+    .string()
+    .min(8, '密码至少8位字符')
+    .max(100, '密码不能超过100位字符')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '密码需包含大小写字母和数字'),
+});
+
+// 手机注册表单验证
+export const phoneRegisterSchema = z.object({
   phone: z
     .string()
     .min(1, '请输入手机号')
@@ -28,6 +43,28 @@ export const registerSchema = z.object({
     .max(6, '验证码不能超过6位')
     .regex(/^\d+$/, '验证码只能包含数字'),
 });
+
+// 邮箱注册表单验证
+export const emailRegisterSchema = z.object({
+  email: z
+    .string()
+    .min(1, '请输入邮箱地址')
+    .regex(emailRegex, '请输入正确的邮箱格式')
+    .toLowerCase(),
+  password: z
+    .string()
+    .min(8, '密码至少8位字符')
+    .max(100, '密码不能超过100位字符')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '密码需包含大小写字母和数字'),
+  confirmPassword: z.string(),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: '密码确认不一致',
+  path: ['confirmPassword'],
+});
+
+// 兼容性：保持原有的 loginSchema 和 registerSchema
+export const loginSchema = phoneLoginSchema;
+export const registerSchema = phoneRegisterSchema;
 
 // 宝宝档案验证
 export const babyProfileSchema = z.object({
@@ -80,8 +117,14 @@ export const sleepRecordSchema = z.object({
 });
 
 // 类型导出
-export type LoginFormData = z.infer<typeof loginSchema>;
-export type RegisterFormData = z.infer<typeof registerSchema>;
+export type PhoneLoginFormData = z.infer<typeof phoneLoginSchema>;
+export type EmailLoginFormData = z.infer<typeof emailLoginSchema>;
+export type PhoneRegisterFormData = z.infer<typeof phoneRegisterSchema>;
+export type EmailRegisterFormData = z.infer<typeof emailRegisterSchema>;
 export type BabyProfileFormData = z.infer<typeof babyProfileSchema>;
 export type FeedingRecordFormData = z.infer<typeof feedingRecordSchema>;
 export type SleepRecordFormData = z.infer<typeof sleepRecordSchema>;
+
+// 兼容性类型
+export type LoginFormData = PhoneLoginFormData;
+export type RegisterFormData = PhoneRegisterFormData;

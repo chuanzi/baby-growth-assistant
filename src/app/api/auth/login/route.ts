@@ -1,39 +1,83 @@
 import { NextRequest, NextResponse } from 'next/server';
+import bcrypt from 'bcryptjs';
 import { prisma } from '@/lib/prisma';
 import { signToken } from '@/lib/auth';
-import { loginSchema } from '@/lib/validations';
+import { phoneLoginSchema, emailLoginSchema } from '@/lib/validations';
 import { verifyCode } from '../send-code/route';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { phone, verificationCode } = loginSchema.parse(body);
+    const { method = 'phone' } = body;
 
-    // 验证验证码
-    if (!verifyCode(phone, verificationCode)) {
+    let user;
+
+    if (method === 'phone') {
+      // 手机号登录
+      const { phone, verificationCode } = phoneLoginSchema.parse(body);
+
+      // 验证验证码
+      if (!verifyCode(phone, verificationCode)) {
+        return NextResponse.json(
+          { error: '验证码错误或已过期' },
+          { status: 400 }
+        );
+      }
+
+      // 查找用户
+      user = await prisma.user.findUnique({
+        where: { phone },
+        include: {
+          babies: true,
+        },
+      });
+
+      if (!user) {
+        return NextResponse.json(
+          { error: '用户不存在，请先注册' },
+          { status: 404 }
+        );
+      }
+    } else if (method === 'email') {
+      // 邮箱登录
+      const { email, password } = emailLoginSchema.parse(body);
+
+      // 查找用户
+      user = await prisma.user.findUnique({
+        where: { email: email.toLowerCase() },
+        include: {
+          babies: true,
+        },
+      });
+
+      if (!user || !user.password) {
+        return NextResponse.json(
+          { error: '邮箱或密码错误' },
+          { status: 401 }
+        );
+      }
+
+      // 验证密码
+      const isValidPassword = await bcrypt.compare(password, user.password);
+      if (!isValidPassword) {
+        return NextResponse.json(
+          { error: '邮箱或密码错误' },
+          { status: 401 }
+        );
+      }
+    } else {
       return NextResponse.json(
-        { error: '验证码错误或已过期' },
+        { error: '不支持的登录方式' },
         { status: 400 }
       );
     }
 
-    // 查找用户
-    const user = await prisma.user.findUnique({
-      where: { phone },
-      include: {
-        babies: true, // 包含宝宝信息
-      },
-    });
-
-    if (!user) {
-      return NextResponse.json(
-        { error: '用户不存在，请先注册' },
-        { status: 404 }
-      );
-    }
-
     // 生成JWT token
-    const token = await signToken({ userId: user.id, phone: user.phone });
+    const token = await signToken({ 
+      userId: user.id, 
+      phone: user.phone,
+      email: user.email 
+    });
 
     // 设置cookie
     const response = NextResponse.json({
@@ -42,6 +86,7 @@ export async function POST(request: NextRequest) {
       user: {
         id: user.id,
         phone: user.phone,
+        email: user.email,
         createdAt: user.createdAt,
         babies: user.babies,
       },

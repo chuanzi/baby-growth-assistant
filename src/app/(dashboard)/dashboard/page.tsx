@@ -26,7 +26,7 @@ export default function DashboardPage() {
                 欢迎使用宝宝成长助手！
               </h1>
               <p className="text-gray-600 mt-1">
-                手机号：{user.phone}
+                {user.phone ? `手机号：${user.phone}` : `邮箱：${user.email}`}
               </p>
             </div>
             <Button variant="outline" onClick={logout}>
