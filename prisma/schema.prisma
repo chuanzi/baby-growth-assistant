@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  babies    Baby[]
+}
+
+model Baby {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String
+  birthDate         DateTime
+  gestationalWeeks  Int      // 出生时孕周 (e.g., 32 for 32周)
+  gestationalDays   Int      @default(0) // 额外天数 (e.g., 3 for 32周+3天)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedingRecords  FeedingRecord[]
+  sleepRecords    SleepRecord[]
+  milestoneRecords BabyMilestone[]
+
+  @@map("babies")
+}
+
+model FeedingRecord {
+  id               String   @id @default(cuid())
+  babyId           String
+  type             String   // 'breast', 'formula', 'solid'
+  amountOrDuration String   // 奶量(ml) 或 时长(分钟)，存储为字符串便于灵活处理
+  timestamp        DateTime @default(now())
+  notes            String?  // 备注
+
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+
+  @@map("feeding_records")
+}
+
+model SleepRecord {
+  id        String   @id @default(cuid())
+  babyId    String
+  startTime DateTime
+  endTime   DateTime
+  timestamp DateTime @default(now())
+
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+
+  @@map("sleep_records")
+}
+
+model Milestone {
+  id          String @id @default(cuid())
+  ageRangeMin Int    // 最小矫正月龄(天数)
+  ageRangeMax Int    // 最大矫正月龄(天数)
+  title       String
+  description String
+  category    String // 'motor', 'cognitive', 'social', 'language'
+  
+  babyMilestones BabyMilestone[]
+
+  @@map("milestones")
+}
+
+model BabyMilestone {
+  id                        String    @id @default(cuid())
+  babyId                    String
+  milestoneId               String
+  achievedAt                DateTime?
+  correctedAgeAtAchievement Int?      // 达成时的矫正月龄(天数)
+  createdAt                 DateTime  @default(now())
+
+  baby      Baby      @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  @@unique([babyId, milestoneId])
+  @@map("baby_milestones")
+}
