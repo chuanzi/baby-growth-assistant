@@ -1,10 +1,12 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/Button';
 
 export default function DashboardPage() {
   const { user, logout } = useAuth();
+  const router = useRouter();
 
   if (!user) {
     return (
@@ -43,7 +45,7 @@ export default function DashboardPage() {
               <p className="text-gray-600 mb-6">
                 创建宝宝档案，开始记录成长的每一刻
               </p>
-              <Button>
+              <Button onClick={() => router.push('/create-profile')}>
                 创建宝宝档案
               </Button>
             </div>

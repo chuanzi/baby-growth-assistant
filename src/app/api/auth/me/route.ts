@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 
-export async function GET(request: NextRequest) {
+export async function GET() {
   try {
     const session = await getSession();
     
@@ -39,8 +39,8 @@ export async function GET(request: NextRequest) {
       babies: user.babies,
     });
 
-  } catch (error) {
-    console.error('Get user info error:', error);
+  } catch {
+    console.error('Get user info error');
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

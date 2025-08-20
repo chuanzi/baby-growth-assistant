@@ -62,7 +62,7 @@ export default function RegisterPage() {
         const data = await response.json();
         setError(data.error || '发送验证码失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);
@@ -88,7 +88,7 @@ export default function RegisterPage() {
         const result = await response.json();
         setError(result.error || '注册失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);
@@ -114,7 +114,7 @@ export default function RegisterPage() {
         const result = await response.json();
         setError(result.error || '注册失败');
       }
-    } catch (error) {
+    } catch {
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);
