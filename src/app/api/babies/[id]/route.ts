@@ -84,11 +84,10 @@ export async function PUT(
     // 验证用户身份
     const session = await requireAuth();
     
+    const { id } = await params;
+    
     const body = await request.json();
     const validatedData = babyProfileSchema.parse(body);
-    
-    // 使用参数，避免 lint 警告
-    console.log('Updating baby with id:', id);
 
     // 检查宝宝是否存在且属于当前用户
     const existingBaby = await prisma.baby.findFirst({

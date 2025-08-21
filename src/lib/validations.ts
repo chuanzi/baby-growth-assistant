@@ -93,7 +93,7 @@ export const babyProfileSchema = z.object({
 // 喂养记录验证
 export const feedingRecordSchema = z.object({
   type: z.enum(['breast', 'formula', 'solid'], {
-    required_error: '请选择喂养类型',
+    message: '请选择喂养类型',
   }),
   amountOrDuration: z
     .string()

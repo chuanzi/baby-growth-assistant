@@ -1,11 +1,43 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
-import type { Baby, PersonalizedContent } from '@/types';
+import type { Baby, PersonalizedContent, BabyMilestone } from '@/types';
 import { calculateAge, getAgeCategory } from '@/utils/age-calculator';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
-
 export class AIContentGenerator {
-  private model = genAI.getGenerativeModel({ model: "gemini-pro" });
+  private apiKey = process.env.AI_API_KEY || '';
+  private baseURL = process.env.AI_BASE_URL || '';
+  private model = process.env.AI_MODEL || 'gemini-2.5-pro';
+
+  private async callAI(prompt: string): Promise<string> {
+    try {
+      const response = await fetch(`${this.baseURL}/v1/chat/completions`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+        body: JSON.stringify({
+          model: this.model,
+          messages: [
+            {
+              role: 'user',
+              content: prompt
+            }
+          ],
+          max_tokens: 1000,
+          temperature: 0.7,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`AI API call failed: ${response.status}`);
+      }
+
+      const data = await response.json();
+      return data.choices[0]?.message?.content || '';
+    } catch (error) {
+      console.error('AI API call error:', error);
+      throw error;
+    }
+  }
 
   async generateDailyCard(
     baby: Baby,
@@ -57,9 +89,7 @@ export class AIContentGenerator {
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      const text = response.text();
+      const text = await this.callAI(prompt);
       
       // 尝试解析JSON响应
       const jsonMatch = text.match(/\{[\s\S]*\}/);
@@ -98,9 +128,8 @@ export class AIContentGenerator {
 `;
 
     try {
-      const result = await this.model.generateContent(prompt);
-      const response = await result.response;
-      return response.text();
+      const text = await this.callAI(prompt);
+      return text || '继续观察宝宝的发育情况，每个宝宝的发育节奏都不同，耐心陪伴最重要。';
     } catch (error) {
       console.error('AI milestone recommendation failed:', error);
       return '继续观察宝宝的发育情况，每个宝宝的发育节奏都不同，耐心陪伴最重要。';

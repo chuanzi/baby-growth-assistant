@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 
 const sendCodeSchema = z.object({
   phone: z.string().regex(/^1[3-9]\d{9}$/, '手机号格式不正确'),
-  type: z.enum(['login', 'register'], { required_error: '类型参数必需' }),
+  type: z.enum(['login', 'register'], { message: '类型参数必需' }),
 });
 
 // 模拟验证码存储（生产环境应使用Redis）
@@ -70,7 +70,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { error: error.errors[0].message },
+        { error: error.issues[0]?.message || '参数验证失败' },
         { status: 400 }
       );
     }
