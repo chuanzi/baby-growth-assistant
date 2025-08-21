@@ -56,11 +56,13 @@ model FeedingRecord {
 }
 
 model SleepRecord {
-  id        String   @id @default(cuid())
-  babyId    String
-  startTime DateTime
-  endTime   DateTime
-  timestamp DateTime @default(now())
+  id              String   @id @default(cuid())
+  babyId          String
+  startTime       DateTime
+  endTime         DateTime
+  durationMinutes Int      // 睡眠时长(分钟)
+  timestamp       DateTime @default(now())
+  notes           String?  // 备注
 
   baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
 

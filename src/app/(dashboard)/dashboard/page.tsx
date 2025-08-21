@@ -6,15 +6,22 @@ import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/Button';
 import { AgeDisplay } from '@/components/ui/AgeDisplay';
 import { KnowledgeCard } from '@/components/ui/KnowledgeCard';
+import { ExportButton } from '@/components/export/ExportButton';
 import { calculateAge } from '@/utils/age-calculator';
 import type { PersonalizedContent, Baby } from '@/types';
 
 export default function DashboardPage() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const router = useRouter();
   const [dailyContent, setDailyContent] = useState<PersonalizedContent | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [selectedBaby, setSelectedBaby] = useState<Baby | null>(null);
+  const [todayStats, setTodayStats] = useState({
+    feedingCount: 0,
+    sleepHours: 0,
+    milestonesCompleted: 0,
+  });
+  const [statsLoading, setStatsLoading] = useState(false);
 
   // 选择第一个宝宝作为默认显示
   useEffect(() => {
@@ -58,9 +65,51 @@ export default function DashboardPage() {
     }
   };
 
+  // 获取今日统计数据
+  const fetchTodayStats = async (baby: Baby) => {
+    if (!baby) return;
+    
+    setStatsLoading(true);
+    try {
+      const today = new Date().toISOString().split('T')[0]; // YYYY-MM-DD format
+      
+      // 并行获取喂养和睡眠统计
+      const [feedingResponse, sleepResponse] = await Promise.all([
+        fetch(`/api/records/feeding?babyId=${baby.id}&date=${today}`),
+        fetch(`/api/records/sleep?babyId=${baby.id}&date=${today}`)
+      ]);
+      
+      const stats = {
+        feedingCount: 0,
+        sleepHours: 0,
+        milestonesCompleted: 0,
+      };
+      
+      if (feedingResponse.ok) {
+        const feedingData = await feedingResponse.json();
+        stats.feedingCount = feedingData.statistics?.totalFeedings || 0;
+      }
+      
+      if (sleepResponse.ok) {
+        const sleepData = await sleepResponse.json();
+        stats.sleepHours = sleepData.statistics?.totalSleepHours || 0;
+      }
+      
+      // TODO: 获取里程碑完成数据
+      // const milestonesResponse = await fetch(`/api/milestones/${baby.id}?completed=today`);
+      
+      setTodayStats(stats);
+    } catch (error) {
+      console.error('Failed to fetch today stats:', error);
+    } finally {
+      setStatsLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedBaby) {
       fetchDailyContent(selectedBaby);
+      fetchTodayStats(selectedBaby);
     }
   }, [selectedBaby]);
 
@@ -72,34 +121,19 @@ export default function DashboardPage() {
   // 空状态：没有宝宝档案
   if (user.babies.length === 0) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 p-4">
-        <div className="max-w-4xl mx-auto">
-          {/* 顶部导航 */}
-          <div className="flex items-center justify-between mb-8">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-800">宝宝成长助手</h1>
-              <p className="text-gray-600 mt-1">
-                {user.phone ? `手机号：${user.phone}` : `邮箱：${user.email}`}
-              </p>
-            </div>
-            <Button variant="outline" onClick={logout}>
-              退出登录
+      <div className="max-w-4xl mx-auto p-4">
+        <div className="bg-white rounded-xl shadow-lg p-8">
+          <div className="text-center py-12">
+            <div className="text-6xl mb-4">👶</div>
+            <h2 className="text-xl font-semibold text-gray-800 mb-2">
+              还没有宝宝档案
+            </h2>
+            <p className="text-gray-600 mb-6">
+              创建宝宝档案，开始记录成长的每一刻
+            </p>
+            <Button onClick={() => router.push('/create-profile')}>
+              创建宝宝档案
             </Button>
-          </div>
-
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="text-center py-12">
-              <div className="text-6xl mb-4">👶</div>
-              <h2 className="text-xl font-semibold text-gray-800 mb-2">
-                还没有宝宝档案
-              </h2>
-              <p className="text-gray-600 mb-6">
-                创建宝宝档案，开始记录成长的每一刻
-              </p>
-              <Button onClick={() => router.push('/create-profile')}>
-                创建宝宝档案
-              </Button>
-            </div>
           </div>
         </div>
       </div>
@@ -110,28 +144,8 @@ export default function DashboardPage() {
   const ageInfo = currentBaby ? calculateAge(currentBaby) : null;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 p-4">
-      <div className="max-w-6xl mx-auto">
-        {/* 顶部导航 */}
-        <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-gray-800">宝宝成长助手</h1>
-            <p className="text-gray-600 mt-1">
-              {user.phone ? `手机号：${user.phone}` : `邮箱：${user.email}`}
-            </p>
-          </div>
-          <div className="flex gap-3">
-            <Button 
-              variant="outline" 
-              onClick={() => router.push('/create-profile')}
-            >
-              添加宝宝
-            </Button>
-            <Button variant="outline" onClick={logout}>
-              退出登录
-            </Button>
-          </div>
-        </div>
+    <div className="max-w-6xl mx-auto p-4">
+      <div className="space-y-6">
 
         {/* 宝宝选择器 (多宝宝时显示) */}
         {user.babies.length > 1 && (
@@ -219,23 +233,47 @@ export default function DashboardPage() {
                 >
                   🎯 里程碑追踪
                 </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => router.push('/records')}
+                >
+                  📊 记录时间线
+                </Button>
               </div>
             </div>
 
             {/* 今日记录摘要 */}
             <div className="bg-white rounded-xl shadow-lg p-6">
-              <h3 className="text-lg font-semibold text-gray-800 mb-4">今日记录</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-800">今日记录</h3>
+                <div className="flex gap-2">
+                  {currentBaby && <ExportButton baby={currentBaby} />}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => currentBaby && fetchTodayStats(currentBaby)}
+                    loading={statsLoading}
+                  >
+                    刷新
+                  </Button>
+                </div>
+              </div>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">喂养次数</span>
-                  <span className="font-medium">0 次</span>
+                  <span className="font-medium">
+                    {statsLoading ? '...' : `${todayStats.feedingCount} 次`}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-gray-600">睡眠时长</span>
-                  <span className="font-medium">0 小时</span>
+                  <span className="font-medium">
+                    {statsLoading ? '...' : `${todayStats.sleepHours} 小时`}
+                  </span>
                 </div>
                 <div className="text-xs text-gray-500 mt-3">
-                  开始记录来查看详细统计
+                  {statsLoading ? '正在加载...' : '点击刷新获取最新数据'}
                 </div>
               </div>
             </div>

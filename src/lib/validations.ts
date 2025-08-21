@@ -92,6 +92,7 @@ export const babyProfileSchema = z.object({
 
 // 喂养记录验证
 export const feedingRecordSchema = z.object({
+  babyId: z.string().min(1, '请选择宝宝'),
   type: z.enum(['breast', 'formula', 'solid'], {
     message: '请选择喂养类型',
   }),
@@ -104,9 +105,11 @@ export const feedingRecordSchema = z.object({
 
 // 睡眠记录验证
 export const sleepRecordSchema = z.object({
+  babyId: z.string().min(1, '请选择宝宝'),
   startTime: z.string().min(1, '请选择开始时间'),
   endTime: z.string().min(1, '请选择结束时间'),
   timestamp: z.string().optional(),
+  notes: z.string().optional(),
 }).refine((data) => {
   const start = new Date(data.startTime);
   const end = new Date(data.endTime);

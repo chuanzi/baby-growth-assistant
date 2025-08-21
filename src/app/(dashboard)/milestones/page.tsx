@@ -57,6 +57,42 @@ const categoryColors = {
   language: 'bg-orange-100 text-orange-800 border-orange-200'
 };
 
+interface AIRecommendation {
+  baby: {
+    id: string;
+    name: string;
+    correctedAge: { months: number; days: number };
+    correctedAgeInDays: number;
+  };
+  aiRecommendation: string;
+  priorityMilestones: {
+    inProgress: Milestone[];
+    upcoming: Milestone[];
+  };
+  developmentAnalysis: {
+    categoryProgress: Record<string, number>;
+    strongestCategory: string;
+    weakestCategory: string;
+    totalCompleted: number;
+  };
+  activitySuggestions: {
+    type: string;
+    title: string;
+    description: string;
+    category: string;
+    activities: string[];
+  }[];
+  recentProgress: {
+    completedMilestones: Array<{
+      id: string;
+      achievedAt: string | null;
+      milestone: { id: string; title: string; category: string };
+    }>;
+    recentFeeding: Array<{ id: string; type: string; timestamp: string }>;
+    recentSleep: Array<{ id: string; startTime: string; endTime: string }>;
+  };
+}
+
 export default function MilestonesPage() {
   const { user } = useAuth();
   const router = useRouter();
@@ -64,6 +100,9 @@ export default function MilestonesPage() {
   const [milestoneData, setMilestoneData] = useState<MilestoneData | null>(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'inProgress' | 'upcoming' | 'completed'>('inProgress');
+  const [aiRecommendation, setAiRecommendation] = useState<AIRecommendation | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [showRecommendations, setShowRecommendations] = useState(true);
 
   // 选择第一个宝宝作为默认
   useEffect(() => {
@@ -115,9 +154,28 @@ export default function MilestonesPage() {
     }
   };
 
+  // 获取AI推荐
+  const fetchAIRecommendations = async (babyId: string) => {
+    if (!babyId) return;
+    
+    setAiLoading(true);
+    try {
+      const response = await fetch(`/api/ai/milestone-recommendations/${babyId}`);
+      if (response.ok) {
+        const data = await response.json();
+        setAiRecommendation(data.data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch AI recommendations:', error);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (selectedBaby) {
       fetchMilestones(selectedBaby);
+      fetchAIRecommendations(selectedBaby);
     }
   }, [selectedBaby]);
 
@@ -243,6 +301,144 @@ export default function MilestonesPage() {
           </div>
         ) : milestoneData ? (
           <>
+            {/* AI 推荐区域 */}
+            {showRecommendations && (
+              <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-xl border border-blue-200 p-6 mb-6">
+                <div className="flex items-center justify-between mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">🤖</span>
+                    <h2 className="text-lg font-semibold text-gray-800">AI 个性化指导</h2>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => selectedBaby && fetchAIRecommendations(selectedBaby)}
+                      loading={aiLoading}
+                    >
+                      刷新推荐
+                    </Button>
+                    <button
+                      onClick={() => setShowRecommendations(false)}
+                      className="text-gray-400 hover:text-gray-600"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+
+                {aiLoading ? (
+                  <div className="flex items-center gap-3">
+                    <div className="animate-spin w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                    <p className="text-gray-600">正在生成个性化推荐...</p>
+                  </div>
+                ) : aiRecommendation ? (
+                  <div className="space-y-6">
+                    {/* AI 推荐文本 */}
+                    <div className="bg-white rounded-lg p-4 border border-blue-100">
+                      <h3 className="font-medium text-blue-900 mb-2">🎯 专属发育建议</h3>
+                      <p className="text-gray-700 text-sm leading-relaxed">{aiRecommendation.aiRecommendation}</p>
+                    </div>
+
+                    {/* 发展分析 */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="bg-white rounded-lg p-4 border border-blue-100">
+                        <h3 className="font-medium text-blue-900 mb-3">📊 发展分析</h3>
+                        <div className="space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">总完成数:</span>
+                            <span className="font-medium">{aiRecommendation.developmentAnalysis.totalCompleted} 项</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">优势领域:</span>
+                            <span className="font-medium text-green-600">
+                              {categoryLabels[aiRecommendation.developmentAnalysis.strongestCategory as keyof typeof categoryLabels]}
+                            </span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-600">关注领域:</span>
+                            <span className="font-medium text-orange-600">
+                              {categoryLabels[aiRecommendation.developmentAnalysis.weakestCategory as keyof typeof categoryLabels]}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-white rounded-lg p-4 border border-blue-100">
+                        <div className="flex items-center justify-between mb-3">
+                          <h3 className="font-medium text-blue-900">🎮 活动建议</h3>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => router.push(`/milestones/activities?babyId=${selectedBaby}`)}
+                            className="text-xs"
+                          >
+                            查看全部
+                          </Button>
+                        </div>
+                        <div className="space-y-2">
+                          {aiRecommendation.activitySuggestions.slice(0, 2).map((suggestion, index) => (
+                            <div key={index} className="border-l-2 border-blue-300 pl-3">
+                              <h4 className="text-sm font-medium text-gray-800">{suggestion.title}</h4>
+                              <p className="text-xs text-gray-600">{suggestion.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* 重点里程碑 */}
+                    {(aiRecommendation.priorityMilestones.inProgress.length > 0 || 
+                      aiRecommendation.priorityMilestones.upcoming.length > 0) && (
+                      <div className="bg-white rounded-lg p-4 border border-blue-100">
+                        <h3 className="font-medium text-blue-900 mb-3">⭐ 重点关注里程碑</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                          {aiRecommendation.priorityMilestones.inProgress.slice(0, 2).map((milestone) => (
+                            <div key={milestone.id} className="border border-green-200 bg-green-50 rounded-lg p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                <span className="text-sm font-medium text-green-800">进行中</span>
+                              </div>
+                              <h4 className="font-medium text-gray-800 text-sm">{milestone.title}</h4>
+                              <p className="text-xs text-gray-600 mt-1">{milestone.description}</p>
+                            </div>
+                          ))}
+                          {aiRecommendation.priorityMilestones.upcoming.slice(0, 2).map((milestone) => (
+                            <div key={milestone.id} className="border border-orange-200 bg-orange-50 rounded-lg p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="w-2 h-2 bg-orange-500 rounded-full"></span>
+                                <span className="text-sm font-medium text-orange-800">即将到来</span>
+                              </div>
+                              <h4 className="font-medium text-gray-800 text-sm">{milestone.title}</h4>
+                              <p className="text-xs text-gray-600 mt-1">{milestone.description}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-gray-600">暂无推荐数据，请稍后重试</p>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {showRecommendations === false && (
+              <div className="text-center mb-6">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowRecommendations(true)}
+                  className="text-sm"
+                >
+                  🤖 显示 AI 指导
+                </Button>
+              </div>
+            )}
+
             {/* 统计卡片 */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-white rounded-xl shadow-sm p-6 text-center">

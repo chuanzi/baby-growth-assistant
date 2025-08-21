@@ -3,6 +3,8 @@
 import { useAuth } from '@/lib/auth-context';
 import { useRouter } from 'next/navigation';
 import { useEffect } from 'react';
+import { TopBar } from '@/components/navigation/TopBar';
+import { MobileNav } from '@/components/navigation/MobileNav';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -39,5 +41,13 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
     );
   }
 
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <TopBar />
+      <main className="pb-4">
+        {children}
+      </main>
+      <MobileNav />
+    </div>
+  );
 }
