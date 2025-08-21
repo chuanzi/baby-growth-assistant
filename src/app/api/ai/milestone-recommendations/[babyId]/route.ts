@@ -85,18 +85,18 @@ export async function GET(
     });
 
     // 筛选未完成的里程碑
-    const uncompletedInProgress = inProgressMilestones.filter(m => 
-      !m.babyMilestones.some(bm => bm.achievedAt)
+    const uncompletedInProgress = inProgressMilestones.filter((m: typeof inProgressMilestones[0]) => 
+      !m.babyMilestones.some((bm: typeof m.babyMilestones[0]) => bm.achievedAt)
     );
-    const uncompletedUpcoming = upcomingMilestones.filter(m => 
-      !m.babyMilestones.some(bm => bm.achievedAt)
+    const uncompletedUpcoming = upcomingMilestones.filter((m: typeof upcomingMilestones[0]) => 
+      !m.babyMilestones.some((bm: typeof m.babyMilestones[0]) => bm.achievedAt)
     );
 
     // 使用AI生成个性化推荐
     const aiGenerator = new AIContentGenerator();
     const recommendation = await aiGenerator.generateMilestoneRecommendation(
       baby,
-      baby.milestoneRecords.map(mr => ({
+      baby.milestoneRecords.map((mr: typeof baby.milestoneRecords[0]) => ({
         id: mr.id,
         babyId: mr.babyId,
         milestoneId: mr.milestoneId,
@@ -115,12 +115,12 @@ export async function GET(
     );
 
     // 分析宝宝的发展模式
-    const completedMilestones = baby.milestoneRecords.filter(mr => mr.achievedAt);
+    const completedMilestones = baby.milestoneRecords.filter((mr: typeof baby.milestoneRecords[0]) => mr.achievedAt);
     const categoryProgress = {
-      motor: completedMilestones.filter(mr => mr.milestone.category === 'motor').length,
-      cognitive: completedMilestones.filter(mr => mr.milestone.category === 'cognitive').length,
-      social: completedMilestones.filter(mr => mr.milestone.category === 'social').length,
-      language: completedMilestones.filter(mr => mr.milestone.category === 'language').length,
+      motor: completedMilestones.filter((mr: typeof completedMilestones[0]) => mr.milestone.category === 'motor').length,
+      cognitive: completedMilestones.filter((mr: typeof completedMilestones[0]) => mr.milestone.category === 'cognitive').length,
+      social: completedMilestones.filter((mr: typeof completedMilestones[0]) => mr.milestone.category === 'social').length,
+      language: completedMilestones.filter((mr: typeof completedMilestones[0]) => mr.milestone.category === 'language').length,
     };
 
     // 确定优势和需要关注的领域

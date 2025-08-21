@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
@@ -152,18 +153,18 @@ export async function GET(request: NextRequest) {
 
       statistics = {
         totalFeedings: todayRecords.length,
-        breastFeedings: todayRecords.filter(r => r.type === 'breast').length,
-        formulaFeedings: todayRecords.filter(r => r.type === 'formula').length,
-        solidFeedings: todayRecords.filter(r => r.type === 'solid').length,
+        breastFeedings: todayRecords.filter((r: any) => r.type === 'breast').length,
+        formulaFeedings: todayRecords.filter((r: any) => r.type === 'formula').length,
+        solidFeedings: todayRecords.filter((r: any) => r.type === 'solid').length,
         lastFeedingTime: todayRecords.length > 0 
-          ? todayRecords.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())[0].timestamp.toISOString()
+          ? todayRecords.sort((a: any, b: any) => b.timestamp.getTime() - a.timestamp.getTime())[0].timestamp.toISOString()
           : null,
       };
     }
 
     return NextResponse.json({
       success: true,
-      records: feedingRecords.map(record => ({
+      records: feedingRecords.map((record: any) => ({
         id: record.id,
         type: record.type,
         amountOrDuration: record.amountOrDuration,

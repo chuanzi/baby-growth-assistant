@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
@@ -54,7 +55,7 @@ export async function GET(
     });
 
     // 格式化返回数据
-    const milestonesWithStatus = relevantMilestones.map(milestone => {
+    const milestonesWithStatus = relevantMilestones.map((milestone: typeof relevantMilestones[0]) => {
       const babyMilestone = milestone.babyMilestones[0];
       const isInCurrentRange = correctedAgeInDays >= milestone.ageRangeMin && 
                               correctedAgeInDays <= milestone.ageRangeMax;
@@ -75,9 +76,9 @@ export async function GET(
     });
 
     // 按状态分组
-    const completed = milestonesWithStatus.filter(m => m.isCompleted);
-    const inProgress = milestonesWithStatus.filter(m => !m.isCompleted && m.isInCurrentRange);
-    const upcoming = milestonesWithStatus.filter(m => !m.isCompleted && !m.isInCurrentRange && m.isPriority);
+    const completed = milestonesWithStatus.filter((m: any) => m.isCompleted);
+    const inProgress = milestonesWithStatus.filter((m: any) => !m.isCompleted && m.isInCurrentRange);
+    const upcoming = milestonesWithStatus.filter((m: any) => !m.isCompleted && !m.isInCurrentRange && m.isPriority);
 
     return NextResponse.json({
       success: true,

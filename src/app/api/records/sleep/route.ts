@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
@@ -157,7 +158,7 @@ export async function GET(request: NextRequest) {
         },
       });
 
-      const totalSleepMinutes = todayRecords.reduce((sum, record) => sum + record.durationMinutes, 0);
+      const totalSleepMinutes = todayRecords.reduce((sum: any, record: any) => sum + record.durationMinutes, 0);
       const totalSleepHours = Math.round((totalSleepMinutes / 60) * 10) / 10;
 
       statistics = {
@@ -168,14 +169,14 @@ export async function GET(request: NextRequest) {
           ? Math.round((totalSleepMinutes / todayRecords.length) * 10) / 10
           : 0,
         lastSleepTime: todayRecords.length > 0 
-          ? todayRecords.sort((a, b) => b.endTime.getTime() - a.endTime.getTime())[0].endTime.toISOString()
+          ? todayRecords.sort((a: any, b: any) => b.endTime.getTime() - a.endTime.getTime())[0].endTime.toISOString()
           : null,
       };
     }
 
     return NextResponse.json({
       success: true,
-      records: sleepRecords.map(record => ({
+      records: sleepRecords.map((record: any) => ({
         id: record.id,
         startTime: record.startTime.toISOString(),
         endTime: record.endTime.toISOString(),

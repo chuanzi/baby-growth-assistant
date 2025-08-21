@@ -70,7 +70,7 @@ export async function GET() {
 
     return NextResponse.json({
       success: true,
-      babies: babies.map(baby => ({
+      babies: babies.map((baby: typeof babies[0]) => ({
         id: baby.id,
         name: baby.name,
         birthDate: baby.birthDate.toISOString(),

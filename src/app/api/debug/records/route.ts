@@ -62,13 +62,13 @@ export async function GET(request: NextRequest) {
         currentTime: new Date().toISOString(),
       },
       allRecords: {
-        feeding: feedingRecords.map(r => ({
+        feeding: feedingRecords.map((r: typeof feedingRecords[0]) => ({
           id: r.id,
           type: r.type,
           amount: r.amountOrDuration,
           timestamp: r.timestamp.toISOString(),
         })),
-        sleep: sleepRecords.map(r => ({
+        sleep: sleepRecords.map((r: typeof sleepRecords[0]) => ({
           id: r.id,
           startTime: r.startTime.toISOString(),
           endTime: r.endTime.toISOString(),
@@ -77,13 +77,13 @@ export async function GET(request: NextRequest) {
         })),
       },
       todayRecords: {
-        feeding: todayFeeding.map(r => ({
+        feeding: todayFeeding.map((r: typeof todayFeeding[0]) => ({
           id: r.id,
           type: r.type,
           amount: r.amountOrDuration,
           timestamp: r.timestamp.toISOString(),
         })),
-        sleep: todaySleep.map(r => ({
+        sleep: todaySleep.map((r: typeof todaySleep[0]) => ({
           id: r.id,
           startTime: r.startTime.toISOString(),
           endTime: r.endTime.toISOString(),
@@ -96,7 +96,7 @@ export async function GET(request: NextRequest) {
         totalSleepRecords: sleepRecords.length,
         todayFeedingCount: todayFeeding.length,
         todaySleepCount: todaySleep.length,
-        todaySleepHours: todaySleep.reduce((sum, r) => sum + r.durationMinutes, 0) / 60,
+        todaySleepHours: todaySleep.reduce((sum: number, r: typeof todaySleep[0]) => sum + r.durationMinutes, 0) / 60,
       }
     });
 

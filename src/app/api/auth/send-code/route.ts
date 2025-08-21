@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { prisma } from '@/lib/prisma';
+import { demoDb } from '@/lib/demo-db';
 
 const sendCodeSchema = z.object({
   phone: z.string().regex(/^1[3-9]\d{9}$/, '手机号格式不正确'),
@@ -9,6 +10,9 @@ const sendCodeSchema = z.object({
 
 // 模拟验证码存储（生产环境应使用Redis）
 const verificationCodes = new Map<string, { code: string; expiry: number; attempts: number }>();
+
+// 检查是否在Vercel演示环境
+const isVercelDemo = process.env.VERCEL && process.env.DATABASE_URL?.includes('/tmp/');
 
 export async function POST(request: NextRequest) {
   try {
@@ -48,11 +52,15 @@ export async function POST(request: NextRequest) {
     const expiry = Date.now() + 5 * 60 * 1000; // 5分钟过期
 
     // 存储验证码
-    verificationCodes.set(phone, {
-      code,
-      expiry,
-      attempts: 0
-    });
+    if (isVercelDemo) {
+      demoDb.verificationCode.store(phone, code);
+    } else {
+      verificationCodes.set(phone, {
+        code,
+        expiry,
+        attempts: 0
+      });
+    }
 
     // 模拟发送短信（生产环境需要接入真实短信服务）
     console.log(`[SMS] 发送验证码到 ${phone}: ${code}`);
@@ -63,8 +71,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true, 
       message: '验证码已发送',
-      // 开发环境下返回验证码方便测试
-      ...(process.env.NODE_ENV === 'development' && { code })
+      // 演示环境下返回验证码方便测试
+      ...(isVercelDemo && { code })
     });
 
   } catch (error) {
@@ -85,6 +93,11 @@ export async function POST(request: NextRequest) {
 
 // 导出验证码验证函数供其他API使用
 export function verifyCode(phone: string, code: string): boolean {
+  // 在演示环境中使用demo数据库
+  if (isVercelDemo) {
+    return demoDb.verificationCode.verify(phone, code);
+  }
+
   const codeData = verificationCodes.get(phone);
   
   if (!codeData) {
