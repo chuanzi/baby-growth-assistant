@@ -69,6 +69,8 @@ export default function CreateProfilePage() {
     setLoading(true);
     setError('');
 
+    console.log('Submitting baby profile form data:', data);
+
     try {
       const response = await fetch('/api/babies', {
         method: 'POST',
@@ -78,16 +80,19 @@ export default function CreateProfilePage() {
         body: JSON.stringify(data),
       });
 
+      const result = await response.json();
+      console.log('API response:', { status: response.status, ok: response.ok, result });
+
       if (response.ok) {
-        const result = await response.json();
         // 更新用户状态，添加新宝宝
         updateUser({ babies: [result.baby] });
         router.push('/dashboard');
       } else {
-        const result = await response.json();
+        console.error('Baby profile creation failed:', result);
         setError(result.error || '创建档案失败');
       }
-    } catch {
+    } catch (error) {
+      console.error('Network error during baby profile creation:', error);
       setError('网络错误，请稍后重试');
     } finally {
       setLoading(false);
