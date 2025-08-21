@@ -62,7 +62,7 @@ export default function MilestonesPage() {
   const router = useRouter();
   const [selectedBaby, setSelectedBaby] = useState<string>('');
   const [milestoneData, setMilestoneData] = useState<MilestoneData | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [dataLoading, setDataLoading] = useState(false);
   const [activeTab, setActiveTab] = useState<'inProgress' | 'upcoming' | 'completed'>('inProgress');
 
   // 选择第一个宝宝作为默认
@@ -76,7 +76,7 @@ export default function MilestonesPage() {
   const fetchMilestones = async (babyId: string) => {
     if (!babyId) return;
     
-    setLoading(true);
+    setDataLoading(true);
     try {
       const response = await fetch(`/api/milestones/${babyId}`);
       if (response.ok) {
@@ -86,7 +86,7 @@ export default function MilestonesPage() {
     } catch (error) {
       console.error('Failed to fetch milestones:', error);
     } finally {
-      setLoading(false);
+      setDataLoading(false);
     }
   };
 
@@ -121,14 +121,9 @@ export default function MilestonesPage() {
     }
   }, [selectedBaby]);
 
+  // 由于有了 DashboardLayout，这里不需要再检查认证状态
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p>加载中...</p>
-        </div>
-      </div>
-    );
+    return null; // 这种情况不应该发生，因为布局会处理重定向
   }
 
   if (user.babies.length === 0) {
@@ -241,7 +236,7 @@ export default function MilestonesPage() {
           </div>
         )}
 
-        {loading ? (
+        {dataLoading ? (
           <div className="text-center py-20">
             <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
             <p className="text-gray-600">正在加载里程碑数据...</p>

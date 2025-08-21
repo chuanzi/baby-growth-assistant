@@ -13,7 +13,7 @@ export default function DashboardPage() {
   const { user, logout } = useAuth();
   const router = useRouter();
   const [dailyContent, setDailyContent] = useState<PersonalizedContent | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [aiLoading, setAiLoading] = useState(false);
   const [selectedBaby, setSelectedBaby] = useState<Baby | null>(null);
 
   // 选择第一个宝宝作为默认显示
@@ -27,7 +27,7 @@ export default function DashboardPage() {
   const fetchDailyContent = async (baby: Baby) => {
     if (!baby) return;
     
-    setLoading(true);
+    setAiLoading(true);
     try {
       const response = await fetch(`/api/ai/daily-content/${baby.id}`, {
         method: 'GET',
@@ -54,7 +54,7 @@ export default function DashboardPage() {
       };
       setDailyContent(defaultContent);
     } finally {
-      setLoading(false);
+      setAiLoading(false);
     }
   };
 
@@ -64,14 +64,9 @@ export default function DashboardPage() {
     }
   }, [selectedBaby]);
 
+  // 由于有了 DashboardLayout，这里不需要再检查认证状态
   if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <p>加载中...</p>
-        </div>
-      </div>
-    );
+    return null; // 这种情况不应该发生，因为布局会处理重定向
   }
 
   // 空状态：没有宝宝档案
@@ -176,13 +171,13 @@ export default function DashboardPage() {
                   variant="outline"
                   size="sm"
                   onClick={() => currentBaby && fetchDailyContent(currentBaby)}
-                  loading={loading}
+                  loading={aiLoading}
                 >
                   刷新
                 </Button>
               </div>
 
-              {loading ? (
+              {aiLoading ? (
                 <div className="text-center py-8">
                   <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
                   <p className="text-gray-600">正在为您生成个性化内容...</p>
