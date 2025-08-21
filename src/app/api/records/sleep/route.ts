@@ -3,7 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { sleepRecordSchema } from '@/lib/validations';
 import { z } from 'zod';
-import { getLocalDateRange } from '@/utils/time-helpers';
+import { getLocalDateRange, getTodayDateString } from '@/utils/time-helpers';
 
 export async function POST(request: NextRequest) {
   try {
@@ -144,7 +144,7 @@ export async function GET(request: NextRequest) {
     // 如果查询今日记录，同时返回统计信息
     let statistics = null;
     if (date || !date) { // 默认返回今日统计
-      const today = date; // 如果没有指定日期，使用当前本地日期
+      const today = date || getTodayDateString(); // 如果没有指定日期，使用当前本地日期
       const { start: startOfToday, end: endOfToday } = getLocalDateRange(today);
 
       const todayRecords = await prisma.sleepRecord.findMany({

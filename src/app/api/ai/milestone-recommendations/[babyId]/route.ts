@@ -97,8 +97,20 @@ export async function GET(
     const recommendation = await aiGenerator.generateMilestoneRecommendation(
       baby,
       baby.milestoneRecords.map(mr => ({
-        ...mr,
-        achievedAt: mr.achievedAt || undefined
+        id: mr.id,
+        babyId: mr.babyId,
+        milestoneId: mr.milestoneId,
+        achievedAt: mr.achievedAt || undefined,
+        correctedAgeAtAchievement: mr.correctedAgeAtAchievement ?? undefined,
+        createdAt: mr.createdAt,
+        milestone: {
+          id: mr.milestone.id,
+          ageRangeMin: mr.milestone.ageRangeMin,
+          ageRangeMax: mr.milestone.ageRangeMax,
+          title: mr.milestone.title,
+          description: mr.milestone.description,
+          category: mr.milestone.category as 'motor' | 'cognitive' | 'social' | 'language'
+        }
       }))
     );
 

@@ -8,7 +8,7 @@ import type { Baby } from '@/types';
 
 interface ExportButtonProps {
   baby: Baby;
-  variant?: 'primary' | 'outline' | 'ghost';
+  variant?: 'primary' | 'secondary' | 'outline';
   size?: 'sm' | 'md' | 'lg';
 }
 
@@ -70,7 +70,7 @@ export function ExportButton({ baby, variant = 'outline', size = 'sm' }: ExportB
               </h5>
               <div className="space-y-2">
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleExport('pdf', 'week')}
                   className="w-full justify-start text-sm"
@@ -78,7 +78,7 @@ export function ExportButton({ baby, variant = 'outline', size = 'sm' }: ExportB
                   近7天报告
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleExport('pdf', 'month')}
                   className="w-full justify-start text-sm"
@@ -96,7 +96,7 @@ export function ExportButton({ baby, variant = 'outline', size = 'sm' }: ExportB
               </h5>
               <div className="space-y-2">
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleExport('csv-feeding', 'week')}
                   className="w-full justify-start text-sm"
@@ -104,7 +104,7 @@ export function ExportButton({ baby, variant = 'outline', size = 'sm' }: ExportB
                   喂养记录 (7天)
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleExport('csv-sleep', 'week')}
                   className="w-full justify-start text-sm"
@@ -112,7 +112,7 @@ export function ExportButton({ baby, variant = 'outline', size = 'sm' }: ExportB
                   睡眠记录 (7天)
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleExport('csv-feeding', 'month')}
                   className="w-full justify-start text-sm"
@@ -120,7 +120,7 @@ export function ExportButton({ baby, variant = 'outline', size = 'sm' }: ExportB
                   喂养记录 (30天)
                 </Button>
                 <Button
-                  variant="ghost"
+                  variant="secondary"
                   size="sm"
                   onClick={() => handleExport('csv-sleep', 'month')}
                   className="w-full justify-start text-sm"
@@ -133,7 +133,7 @@ export function ExportButton({ baby, variant = 'outline', size = 'sm' }: ExportB
           
           <div className="border-t border-gray-200 p-3">
             <Button
-              variant="ghost"
+              variant="secondary"
               size="sm"
               onClick={() => setShowMenu(false)}
               className="w-full"

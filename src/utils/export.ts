@@ -89,7 +89,7 @@ export function exportToPDF(data: ExportData) {
   
   // 统计摘要
   if (currentY < 200) {
-    currentY = (doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY + 30 || currentY + 30;
+    currentY = ((doc as unknown as { lastAutoTable?: { finalY: number } }).lastAutoTable?.finalY ?? currentY) + 30;
   } else {
     doc.addPage();
     currentY = 30;

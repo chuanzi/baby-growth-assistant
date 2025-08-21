@@ -31,7 +31,9 @@ export interface SleepRecord {
   babyId: string;
   startTime: Date;
   endTime: Date;
+  durationMinutes: number;
   timestamp: Date;
+  notes?: string;
 }
 
 export interface Milestone {
