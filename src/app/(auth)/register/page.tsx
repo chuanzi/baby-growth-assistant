@@ -5,6 +5,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/Button';
 import { PhoneInput } from '@/components/forms/PhoneInput';
 import { EmailInput } from '@/components/forms/EmailInput';
@@ -22,6 +23,7 @@ export default function RegisterPage() {
   const [error, setError] = useState('');
   const [authMethod, setAuthMethod] = useState<AuthMethod>('email'); // 默认邮箱注册
   const router = useRouter();
+  const { login } = useAuth();
 
   // 手机注册表单
   const phoneForm = useForm<PhoneRegisterFormData>({
@@ -83,6 +85,9 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        // 调用login来更新认证状态
+        login(result.user);
         router.push('/create-profile');
       } else {
         const result = await response.json();
@@ -109,6 +114,9 @@ export default function RegisterPage() {
       });
 
       if (response.ok) {
+        const result = await response.json();
+        // 调用login来更新认证状态
+        login(result.user);
         router.push('/create-profile');
       } else {
         const result = await response.json();

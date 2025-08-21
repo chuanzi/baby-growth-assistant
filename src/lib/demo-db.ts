@@ -120,10 +120,16 @@ export const demoDb = {
       return user;
     },
 
-    async findUnique(where: { phone?: string; email?: string }) {
+    async findUnique(where: { phone?: string; email?: string }, include?: { babies?: boolean }) {
       for (const [_, user] of memoryStore.users) {
         if ((where.phone && user.phone === where.phone) || 
-            (where.email && user.email === where.email)) {
+            (where.email && user.email && user.email.toLowerCase() === where.email.toLowerCase())) {
+          
+          if (include?.babies) {
+            const babies = Array.from(memoryStore.babies.values())
+              .filter(baby => baby.userId === user.id);
+            return { ...user, babies };
+          }
           return user;
         }
       }
