@@ -9,7 +9,17 @@ export async function POST(request: NextRequest) {
     const session = await requireAuth();
     
     const body = await request.json();
-    const validatedData = babyProfileSchema.parse(body);
+    console.log('Received baby profile data:', body);
+    
+    // 确保数字类型字段是数字
+    const processedBody = {
+      ...body,
+      gestationalWeeks: typeof body.gestationalWeeks === 'string' ? parseInt(body.gestationalWeeks) : body.gestationalWeeks,
+      gestationalDays: typeof body.gestationalDays === 'string' ? parseInt(body.gestationalDays) : body.gestationalDays,
+    };
+    
+    console.log('Processed baby profile data:', processedBody);
+    const validatedData = babyProfileSchema.parse(processedBody);
 
     // 创建宝宝档案
     const baby = await prisma.baby.create({
@@ -43,6 +53,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { error: '请先登录' },
         { status: 401 }
+      );
+    }
+
+    // 更详细的错误信息用于调试
+    if (error instanceof Error) {
+      console.error('Detailed error:', {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
+      
+      return NextResponse.json(
+        { error: `创建档案失败: ${error.message}` },
+        { status: 500 }
       );
     }
 
