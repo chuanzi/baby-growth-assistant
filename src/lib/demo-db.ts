@@ -144,6 +144,7 @@ export const demoDb = {
   // 宝宝操作
   baby: {
     async create(data: Omit<Baby, 'id' | 'createdAt' | 'updatedAt'>) {
+      console.log('Demo DB: Creating baby with data:', data);
       const id = generateId();
       const now = new Date();
       const baby: Baby = {
@@ -152,6 +153,7 @@ export const demoDb = {
         createdAt: now,
         updatedAt: now,
       };
+      console.log('Demo DB: Created baby object:', baby);
       memoryStore.babies.set(id, baby);
       return baby;
     },

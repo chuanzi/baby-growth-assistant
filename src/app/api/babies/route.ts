@@ -22,6 +22,15 @@ export async function POST(request: NextRequest) {
     const validatedData = babyProfileSchema.parse(processedBody);
 
     // 创建宝宝档案
+    console.log('Creating baby with data:', {
+      userId: session.userId,
+      name: validatedData.name,
+      birthDate: validatedData.birthDate,
+      birthDateParsed: new Date(validatedData.birthDate),
+      gestationalWeeks: validatedData.gestationalWeeks,
+      gestationalDays: validatedData.gestationalDays,
+    });
+
     const baby = await prisma.baby.create({
       data: {
         userId: session.userId as string,
@@ -32,17 +41,19 @@ export async function POST(request: NextRequest) {
       },
     });
 
+    console.log('Created baby object:', baby);
+
     return NextResponse.json({
       success: true,
       message: '宝宝档案创建成功',
       baby: {
         id: baby.id,
         name: baby.name,
-        birthDate: baby.birthDate.toISOString(),
+        birthDate: baby.birthDate?.toISOString() || '',
         gestationalWeeks: baby.gestationalWeeks,
         gestationalDays: baby.gestationalDays,
-        createdAt: baby.createdAt.toISOString(),
-        updatedAt: baby.updatedAt.toISOString(),
+        createdAt: baby.createdAt?.toISOString() || new Date().toISOString(),
+        updatedAt: baby.updatedAt?.toISOString() || new Date().toISOString(),
       },
     });
 
