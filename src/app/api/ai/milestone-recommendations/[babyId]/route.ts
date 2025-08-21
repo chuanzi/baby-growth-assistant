@@ -96,7 +96,10 @@ export async function GET(
     const aiGenerator = new AIContentGenerator();
     const recommendation = await aiGenerator.generateMilestoneRecommendation(
       baby,
-      baby.milestoneRecords
+      baby.milestoneRecords.map(mr => ({
+        ...mr,
+        achievedAt: mr.achievedAt || undefined
+      }))
     );
 
     // 分析宝宝的发展模式
