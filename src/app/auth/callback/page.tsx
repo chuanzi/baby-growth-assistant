@@ -13,34 +13,46 @@ function AuthCallbackContent() {
   useEffect(() => {
     const handleAuthCallback = async () => {
       try {
-        // 处理认证回调
-        const { data, error } = await supabase.auth.getSession();
+        console.log('Starting auth callback handler...');
+        console.log('Current URL:', window.location.href);
+        
+        // 使用 Supabase 的 exchangeCodeForSession 方法处理 OAuth 回调
+        const { data, error } = await supabase.auth.exchangeCodeForSession(window.location.href);
         
         if (error) {
-          console.error('Auth callback error:', error);
-          setError(error.message);
+          console.error('OAuth exchange error:', error);
+          
+          // 如果 exchange 失败，尝试获取现有会话
+          const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+          
+          if (sessionError || !sessionData.session) {
+            console.error('No valid session found:', sessionError);
+            setError('认证失败，请重试');
+            return;
+          }
+          
+          console.log('Found existing session, proceeding...');
+          router.replace('/dashboard');
           return;
         }
 
         if (data.session) {
-          // 认证成功，重定向到 dashboard
-          console.log('Authentication successful, redirecting to dashboard');
+          console.log('OAuth exchange successful, redirecting to dashboard');
           router.replace('/dashboard');
         } else {
-          // 没有会话，重定向到登录页
-          console.log('No session found, redirecting to login');
-          router.replace('/login');
+          console.log('No session after OAuth exchange');
+          setError('认证过程未完成，请重试');
         }
       } catch (err) {
         console.error('Unexpected error in auth callback:', err);
-        setError('认证过程中发生意外错误');
+        setError('认证过程中发生意外错误: ' + (err as Error).message);
       } finally {
         setLoading(false);
       }
     };
 
     // 延迟执行，确保页面已完全加载
-    const timer = setTimeout(handleAuthCallback, 1000);
+    const timer = setTimeout(handleAuthCallback, 500);
     
     return () => clearTimeout(timer);
   }, [router]);
