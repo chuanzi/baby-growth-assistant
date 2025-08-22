@@ -117,10 +117,11 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
       throw new Error('Supabase is not configured');
     }
 
-    // 获取当前环境的URL
-    const baseUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // 优先使用环境变量中的生产 URL，确保重定向正确
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+      (typeof window !== 'undefined' 
+        ? window.location.origin 
+        : 'https://baby-growth-assistant-28z33uaja-chuanzis-projects.vercel.app');
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -155,15 +156,17 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
       return { error: { message: 'Supabase is not configured' } as AuthError };
     }
 
-    const baseUrl = typeof window !== 'undefined' 
-      ? window.location.origin 
-      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+    // 优先使用环境变量中的生产 URL，确保邮件确认链接正确
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
+      (typeof window !== 'undefined' 
+        ? window.location.origin 
+        : 'https://baby-growth-assistant-28z33uaja-chuanzis-projects.vercel.app');
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${baseUrl}/dashboard`
+        emailRedirectTo: `${baseUrl}/auth/callback`
       }
     });
     
