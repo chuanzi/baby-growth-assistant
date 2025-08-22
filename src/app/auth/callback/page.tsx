@@ -79,13 +79,24 @@ function AuthCallbackContent() {
           <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8 text-center">
             <div className="text-6xl mb-4">❌</div>
             <h1 className="text-2xl font-bold text-gray-800 mb-4">验证失败</h1>
-            <p className="text-gray-600 mb-6">{error}</p>
-            <button
-              onClick={() => router.push('/login')}
-              className="w-full bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
-            >
-              返回登录
-            </button>
+            <p className="text-gray-600 mb-4">{error}</p>
+            <div className="text-xs text-gray-400 mb-6 p-3 bg-gray-50 rounded">
+              URL: {typeof window !== 'undefined' ? window.location.href : ''}
+            </div>
+            <div className="flex space-x-2">
+              <button
+                onClick={() => router.push('/login')}
+                className="flex-1 bg-blue-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-blue-700 transition-colors"
+              >
+                返回登录
+              </button>
+              <button
+                onClick={() => router.push('/debug-auth')}
+                className="flex-1 bg-gray-600 text-white py-3 px-4 rounded-lg font-medium hover:bg-gray-700 transition-colors"
+              >
+                调试信息
+              </button>
+            </div>
           </div>
         </div>
       </div>
