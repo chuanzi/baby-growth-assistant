@@ -50,13 +50,6 @@
       ]
     }
   ],
-  "redirects": [
-    {
-      "source": "/dashboard",
-      "destination": "/dashboard/",
-      "permanent": true
-    }
-  ],
   "rewrites": [
     {
       "source": "/health",

@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import { AuthProvider } from "@/lib/auth-context";
+import { SupabaseAuthProvider } from "@/lib/supabase-auth-context";
 import "./globals.css";
 
 // 字体优化：启用display swap，减少字体阻塞渲染时间
@@ -89,14 +89,14 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-background text-foreground`}
         suppressHydrationWarning
       >
-        <AuthProvider>
+        <SupabaseAuthProvider>
           <div id="app-root" className="min-h-screen">
             {children}
           </div>
           
           {/* 性能监控脚本占位 */}
           <div id="performance-monitor" style={{ display: 'none' }}></div>
-        </AuthProvider>
+        </SupabaseAuthProvider>
       </body>
     </html>
   );

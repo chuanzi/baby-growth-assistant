@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import { useSupabaseAuth } from '@/lib/supabase-auth-context';
 import { useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
 import { CompactAgeDisplay } from '@/components/ui/AgeDisplay';
@@ -9,14 +9,13 @@ import { calculateAge } from '@/utils/age-calculator';
 import { clsx } from 'clsx';
 
 export function TopBar() {
-  const { user, logout } = useAuth();
+  const { user, signOut } = useSupabaseAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/login');
+    await signOut();
   };
 
   const toggleMenu = () => {
@@ -84,7 +83,7 @@ export function TopBar() {
               <div className="hidden lg:flex items-center gap-3">
                 <div className="text-right">
                   <p className="text-sm font-medium text-gray-700">
-                    {user?.phone || user?.email}
+                    {user?.email || user?.phone}
                   </p>
                   <p className="text-xs text-gray-500">已登录</p>
                 </div>
@@ -153,7 +152,7 @@ export function TopBar() {
               {/* 用户信息 */}
               <div className="bg-gray-50 rounded-lg p-3">
                 <p className="text-xs font-medium text-gray-500 mb-1">当前用户</p>
-                <p className="text-sm font-medium text-gray-800">{user?.phone || user?.email}</p>
+                <p className="text-sm font-medium text-gray-800">{user?.email || user?.phone}</p>
               </div>
 
               {/* 操作按钮 */}
