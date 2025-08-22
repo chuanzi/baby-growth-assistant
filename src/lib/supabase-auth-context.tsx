@@ -2,7 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import { useRouter } from 'next/navigation';
-import { supabase } from '@/lib/supabase';
+import { supabase, isSupabaseConfigured } from '@/lib/supabase';
 import type { User as SupabaseUser, AuthError } from '@supabase/supabase-js';
 import type { Baby } from '@/types';
 
@@ -35,13 +35,24 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
 
   // 监听认证状态变化
   useEffect(() => {
+    // 检查 Supabase 是否配置
+    if (!isSupabaseConfigured()) {
+      console.warn('Supabase is not configured, skipping auth initialization');
+      setLoading(false);
+      return;
+    }
+
     // 获取初始会话
     const getInitialSession = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (session?.user) {
-        setSupabaseUser(session.user);
-        await loadUserData(session.user);
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          setSupabaseUser(session.user);
+          await loadUserData(session.user);
+        }
+      } catch (error) {
+        console.error('Failed to get initial session:', error);
       }
       
       setLoading(false);
@@ -102,6 +113,10 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
 
   // Google 登录
   const signInWithGoogle = async () => {
+    if (!isSupabaseConfigured()) {
+      throw new Error('Supabase is not configured');
+    }
+
     // 获取当前环境的URL
     const baseUrl = typeof window !== 'undefined' 
       ? window.location.origin 
@@ -122,6 +137,10 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
 
   // 邮箱登录
   const signInWithEmail = async (email: string, password: string) => {
+    if (!isSupabaseConfigured()) {
+      return { error: { message: 'Supabase is not configured' } as AuthError };
+    }
+
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password
@@ -132,11 +151,19 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
 
   // 邮箱注册
   const signUpWithEmail = async (email: string, password: string) => {
+    if (!isSupabaseConfigured()) {
+      return { error: { message: 'Supabase is not configured' } as AuthError };
+    }
+
+    const baseUrl = typeof window !== 'undefined' 
+      ? window.location.origin 
+      : process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/dashboard`
+        emailRedirectTo: `${baseUrl}/dashboard`
       }
     });
     
@@ -145,6 +172,13 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
 
   // 退出登录
   const signOut = async () => {
+    if (!isSupabaseConfigured()) {
+      setUser(null);
+      setSupabaseUser(null);
+      router.push('/login');
+      return;
+    }
+
     const { error } = await supabase.auth.signOut();
     
     if (!error) {
