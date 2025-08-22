@@ -126,7 +126,11 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${baseUrl}/dashboard`
+        redirectTo: `${baseUrl}/auth/callback`,
+        queryParams: {
+          access_type: 'offline',
+          prompt: 'consent'
+        }
       }
     });
     
