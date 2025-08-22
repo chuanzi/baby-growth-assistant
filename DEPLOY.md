@@ -40,11 +40,30 @@ vercel --prod
 - ✅ 优化了API函数路径配置
 - ✅ 创建了.vercelignore排除文件
 
-## 环境变量检查
-确保在Vercel项目设置中配置了以下环境变量：
-- `DATABASE_URL`: SQLite或PostgreSQL数据库URL
-- `JWT_SECRET`: JWT签名密钥
-- `GEMINI_API_KEY`: Google Gemini API密钥 (可选，AI功能)
+## 环境变量配置
+
+### 必需的环境变量
+在Vercel项目设置 > Environment Variables 中添加：
+
+1. **DATABASE_URL** (必需)
+   - 推荐使用外部数据库服务
+   - 选项1: `postgresql://user:password@host:port/database` (PostgreSQL)
+   - 选项2: `mysql://user:password@host:port/database` (MySQL)
+   - 选项3: 暂时留空，将使用内存数据库进行构建
+
+2. **JWT_SECRET** (必需)
+   - 生成强密钥: `openssl rand -base64 32`
+   - 示例: `your-super-secret-jwt-key-here`
+
+3. **GEMINI_API_KEY** (可选，AI功能)
+   - Google Gemini API密钥
+   - 格式: `your-gemini-api-key`
+
+### 配置步骤
+1. 登录Vercel仪表板
+2. 选择项目 > Settings > Environment Variables
+3. 添加上述变量，选择所有环境 (Production, Preview, Development)
+4. 保存后重新部署项目
 
 ## 部署验证
 部署完成后，访问以下端点验证：

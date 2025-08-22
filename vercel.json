@@ -11,11 +11,6 @@
       "maxDuration": 60
     }
   },
-  "env": {
-    "DATABASE_URL": "@database_url",
-    "JWT_SECRET": "@jwt_secret",
-    "GEMINI_API_KEY": "@gemini_api_key"
-  },
   "headers": [
     {
       "source": "/api/(.*)",
