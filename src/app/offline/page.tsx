@@ -1,11 +1,31 @@
-import { Metadata } from 'next';
+'use client';
 
-export const metadata: Metadata = {
-  title: '离线模式 - 宝宝成长助手',
-  description: '您当前处于离线状态，部分功能可能受限',
-};
+import { useEffect } from 'react';
 
 export default function OfflinePage() {
+  useEffect(() => {
+    // 监听网络状态变化
+    const handleOnline = () => {
+      // 网络恢复，自动刷新
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+    };
+
+    window.addEventListener('online', handleOnline);
+
+    // 检查Service Worker状态
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.ready.then(function(registration) {
+        console.log('Service Worker ready');
+      });
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+    };
+  }, []);
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">
       <div className="max-w-md w-full text-center">
@@ -77,27 +97,6 @@ export default function OfflinePage() {
           <p>网络恢复后，您的离线数据将自动同步</p>
         </div>
       </div>
-      
-      <script
-        dangerouslySetInnerHTML={{
-          __html: `
-            // 监听网络状态变化
-            window.addEventListener('online', function() {
-              // 网络恢复，自动刷新
-              setTimeout(() => {
-                window.location.href = '/dashboard';
-              }, 1000);
-            });
-            
-            // 检查Service Worker状态
-            if ('serviceWorker' in navigator) {
-              navigator.serviceWorker.ready.then(function(registration) {
-                console.log('Service Worker ready');
-              });
-            }
-          `
-        }}
-      />
     </div>
   );
 }

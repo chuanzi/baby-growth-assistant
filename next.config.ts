@@ -19,7 +19,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   // 性能优化配置
   experimental: {
-    optimizeCss: true,
+    // optimizeCss: true, // 暂时禁用，避免critters依赖问题
     optimizePackageImports: ['lucide-react', '@heroicons/react', '@headlessui/react'],
     webVitalsAttribution: ['CLS', 'LCP'],
   },
