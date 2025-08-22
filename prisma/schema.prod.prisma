@@ -1,0 +1,151 @@
+// 生产环境Prisma Schema配置
+// 针对PostgreSQL优化的数据库模式
+
+generator client {
+  provider = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+  previewFeatures = ["relationJoins", "omitApi"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  relationMode = "prisma"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String?  @unique
+  email     String?  @unique
+  password  String?
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  babies    Baby[]
+
+  // 性能优化索引
+  @@index([phone])
+  @@index([email])
+  @@index([createdAt])
+  @@map("users")
+}
+
+model Baby {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String   @db.VarChar(100)
+  birthDate         DateTime @db.Date
+  gestationalWeeks  Int      @db.SmallInt
+  gestationalDays   Int      @default(0) @db.SmallInt
+  createdAt         DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt         DateTime @updatedAt @db.Timestamptz(6)
+
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedingRecords  FeedingRecord[]
+  sleepRecords    SleepRecord[]
+  milestoneRecords BabyMilestone[]
+
+  // 性能优化索引
+  @@index([userId])
+  @@index([birthDate])
+  @@index([createdAt])
+  @@map("babies")
+}
+
+model FeedingRecord {
+  id               String   @id @default(cuid())
+  babyId           String
+  type             String   @db.VarChar(20)
+  amountOrDuration String   @db.VarChar(50)
+  timestamp        DateTime @default(now()) @db.Timestamptz(6)
+  notes            String?  @db.Text
+
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+
+  // 性能优化索引
+  @@index([babyId])
+  @@index([timestamp])
+  @@index([babyId, timestamp])
+  @@map("feeding_records")
+}
+
+model SleepRecord {
+  id              String   @id @default(cuid())
+  babyId          String
+  startTime       DateTime @db.Timestamptz(6)
+  endTime         DateTime @db.Timestamptz(6)
+  durationMinutes Int      @db.Integer
+  timestamp       DateTime @default(now()) @db.Timestamptz(6)
+  notes           String?  @db.Text
+
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+
+  // 性能优化索引
+  @@index([babyId])
+  @@index([timestamp])
+  @@index([babyId, startTime])
+  @@map("sleep_records")
+}
+
+model Milestone {
+  id          String @id @default(cuid())
+  ageRangeMin Int    @db.Integer
+  ageRangeMax Int    @db.Integer
+  title       String @db.VarChar(200)
+  description String @db.Text
+  category    String @db.VarChar(50)
+  
+  babyMilestones BabyMilestone[]
+
+  // 性能优化索引
+  @@index([category])
+  @@index([ageRangeMin, ageRangeMax])
+  @@map("milestones")
+}
+
+model BabyMilestone {
+  id                        String    @id @default(cuid())
+  babyId                    String
+  milestoneId               String
+  achievedAt                DateTime? @db.Timestamptz(6)
+  correctedAgeAtAchievement Int?      @db.Integer
+  createdAt                 DateTime  @default(now()) @db.Timestamptz(6)
+
+  baby      Baby      @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+
+  // 性能优化索引
+  @@unique([babyId, milestoneId])
+  @@index([babyId])
+  @@index([milestoneId])
+  @@index([achievedAt])
+  @@map("baby_milestones")
+}
+
+// 系统监控表
+model SystemMetrics {
+  id          String   @id @default(cuid())
+  metricType  String   @db.VarChar(50)
+  value       Float    @db.DoublePrecision
+  metadata    Json?    @db.JsonB
+  timestamp   DateTime @default(now()) @db.Timestamptz(6)
+
+  @@index([metricType])
+  @@index([timestamp])
+  @@map("system_metrics")
+}
+
+// 用户会话表（用于JWT黑名单等）
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique @db.VarChar(500)
+  expiresAt DateTime @db.Timestamptz(6)
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  userAgent String?  @db.Text
+  ipAddress String?  @db.VarChar(45)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([token])
+  @@map("user_sessions")
+}

@@ -1,27 +1,108 @@
 {
   "compilerOptions": {
-    "target": "ES2017",
-    "lib": ["dom", "dom.iterable", "esnext"],
-    "allowJs": true,
-    "skipLibCheck": true,
-    "strict": true,
-    "noEmit": true,
-    "esModuleInterop": true,
+    // Target and Module System
+    "target": "ES2022",
+    "lib": ["dom", "dom.iterable", "esnext", "ES2022"],
     "module": "esnext",
     "moduleResolution": "bundler",
+    
+    // JavaScript Support
+    "allowJs": true,
+    "checkJs": false,
+    
+    // Type Checking - Enhanced Strictness
+    "strict": true,
+    "noUncheckedIndexedAccess": true,
+    "exactOptionalPropertyTypes": true,
+    "noImplicitReturns": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUncheckedSideEffectImports": true,
+    "allowUnusedLabels": false,
+    "allowUnreachableCode": false,
+    
+    // Module Resolution
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    
+    // Emit
+    "noEmit": true,
+    "preserveConstEnums": true,
+    "removeComments": false,
+    "importHelpers": true,
+    
+    // Interop Constraints
+    "forceConsistentCasingInFileNames": true,
+    
+    // Type Acquisition
+    "skipLibCheck": true,
+    
+    // Language and Environment
     "jsx": "preserve",
+    "useDefineForClassFields": true,
+    
+    // Compiler Diagnostics
+    "listEmittedFiles": false,
+    "listFiles": false,
+    "traceResolution": false,
+    "diagnostics": false,
+    "extendedDiagnostics": false,
+    
+    // Projects
     "incremental": true,
+    "composite": false,
+    "tsBuildInfoFile": "./.next/cache/tsconfig.tsbuildinfo",
+    
+    // Output Formatting
+    "pretty": true,
+    "preserveWatchOutput": true,
+    
+    // Watch Options (for development)
+    "assumeChangesOnlyAffectDirectDependencies": true,
+    
+    // Next.js specific
     "plugins": [
       {
         "name": "next"
       }
     ],
+    
+    // Path Mapping
+    "baseUrl": ".",
     "paths": {
-      "@/*": ["./src/*"]
+      "@/*": ["./src/*"],
+      "@/types/*": ["./src/types/*"],
+      "@/components/*": ["./src/components/*"],
+      "@/lib/*": ["./src/lib/*"],
+      "@/utils/*": ["./src/utils/*"],
+      "@/app/*": ["./src/app/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next",
+    "out",
+    "dist",
+    "build",
+    "coverage",
+    "**/*.test.ts",
+    "**/*.test.tsx",
+    "**/*.spec.ts",
+    "**/*.spec.tsx"
+  ],
+  "ts-node": {
+    "esm": true,
+    "compilerOptions": {
+      "module": "ESNext",
+      "target": "ES2022"
+    }
+  }
 }

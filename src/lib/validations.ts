@@ -128,6 +128,89 @@ export type BabyProfileFormData = z.infer<typeof babyProfileSchema>;
 export type FeedingRecordFormData = z.infer<typeof feedingRecordSchema>;
 export type SleepRecordFormData = z.infer<typeof sleepRecordSchema>;
 
+// 里程碑验证
+export const milestoneCompleteSchema = z.object({
+  milestoneId: z.string().min(1, '里程碑ID不能为空'),
+  achievedAt: z.string().datetime().optional(),
+  notes: z.string().max(500, '备注不能超过500字符').optional(),
+});
+
+// 用户资料更新验证
+export const updateProfileSchema = z.object({
+  phone: z.string()
+    .regex(phoneRegex, '请输入正确的手机号格式')
+    .optional(),
+  email: z.string()
+    .regex(emailRegex, '请输入正确的邮箱格式')
+    .toLowerCase()
+    .optional(),
+  currentPassword: z.string().optional(),
+  newPassword: z.string()
+    .min(8, '密码至少8位字符')
+    .max(100, '密码不能超过100位字符')
+    .regex(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/, '密码需包含大小写字母和数字')
+    .optional(),
+  confirmNewPassword: z.string().optional(),
+}).refine(
+  (data) => {
+    if (data.newPassword && !data.currentPassword) return false;
+    if (data.newPassword && data.newPassword !== data.confirmNewPassword) return false;
+    return true;
+  },
+  {
+    message: '密码验证失败',
+    path: ['newPassword'],
+  }
+);
+
+// 查询参数验证
+export const timelineQuerySchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/).optional(),
+  type: z.enum(['feeding', 'sleep', 'milestone', 'all']).default('all'),
+});
+
+export const summaryQuerySchema = z.object({
+  period: z.enum(['today', 'week', 'month']).default('today'),
+});
+
+export const trendsQuerySchema = z.object({
+  period: z.coerce.number().min(1).max(90).default(7),
+  type: z.enum(['feeding', 'sleep', 'all']).default('all'),
+});
+
+// API通用验证
+export const paginationSchema = z.object({
+  page: z.coerce.number().min(1).default(1),
+  limit: z.coerce.number().min(1).max(100).default(20),
+});
+
+export const babyIdParamSchema = z.object({
+  babyId: z.string().min(1, '宝宝ID不能为空'),
+});
+
+export const milestoneIdParamSchema = z.object({
+  milestoneId: z.string().min(1, '里程碑ID不能为空'),
+});
+
+// 文件上传验证
+export const avatarUploadSchema = z.object({
+  file: z.any().refine((file) => file instanceof File, '请选择文件'),
+  maxSize: z.number().default(5 * 1024 * 1024), // 5MB
+  allowedTypes: z.array(z.string()).default(['image/jpeg', 'image/png', 'image/webp']),
+});
+
+// 新增类型导出
+export type MilestoneCompleteFormData = z.infer<typeof milestoneCompleteSchema>;
+export type UpdateProfileFormData = z.infer<typeof updateProfileSchema>;
+export type TimelineQueryData = z.infer<typeof timelineQuerySchema>;
+export type SummaryQueryData = z.infer<typeof summaryQuerySchema>;
+export type TrendsQueryData = z.infer<typeof trendsQuerySchema>;
+export type PaginationData = z.infer<typeof paginationSchema>;
+export type BabyIdParamData = z.infer<typeof babyIdParamSchema>;
+export type MilestoneIdParamData = z.infer<typeof milestoneIdParamSchema>;
+
 // 兼容性类型
 export type LoginFormData = PhoneLoginFormData;
 export type RegisterFormData = PhoneRegisterFormData;

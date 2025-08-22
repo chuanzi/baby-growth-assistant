@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import { Button } from '@/components/ui/Button';
+import { LoadingSpinner, SkeletonCard, SkeletonText } from '@/components/ui/LoadingSpinner';
+import { ErrorMessage } from '@/components/ui/ErrorBoundary';
 import { formatAge } from '@/utils/age-calculator';
 
 interface Milestone {
@@ -206,11 +208,11 @@ export default function MilestonesPage() {
   const renderMilestoneCard = (milestone: Milestone) => (
     <div
       key={milestone.id}
-      className="bg-white rounded-lg border-2 border-gray-100 p-4 hover:border-gray-200 transition-colors"
+      className="bg-white rounded-xl border-2 border-gray-100 p-4 hover:border-gray-200 hover:shadow-md transition-all duration-200 active:scale-[0.98]"
     >
       <div className="flex items-start justify-between mb-3">
-        <div className="flex-1">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
             <span className={`px-2 py-1 text-xs font-medium rounded-full border ${
               categoryColors[milestone.category as keyof typeof categoryColors]
             }`}>
@@ -221,36 +223,45 @@ export default function MilestonesPage() {
                 当前适龄
               </span>
             )}
+            {milestone.isPriority && (
+              <span className="px-2 py-1 text-xs font-medium rounded-full bg-red-100 text-red-800 border border-red-200">
+                重点关注
+              </span>
+            )}
           </div>
-          <h3 className="font-semibold text-gray-800 mb-1">{milestone.title}</h3>
-          <p className="text-gray-600 text-sm leading-relaxed mb-2">
+          <h3 className="font-semibold text-gray-800 mb-2 leading-tight">{milestone.title}</h3>
+          <p className="text-gray-600 text-sm leading-relaxed mb-3">
             {milestone.description}
           </p>
-          <p className="text-xs text-gray-500">
-            适龄范围: {Math.floor(milestone.ageRangeMin / 30)}个月 - {Math.floor(milestone.ageRangeMax / 30)}个月
-          </p>
-          {milestone.isCompleted && milestone.correctedAgeAtAchievement && (
-            <p className="text-xs text-green-600 mt-1">
-              完成时矫正月龄: {formatAge(
-                Math.floor(milestone.correctedAgeAtAchievement / 30), 
-                milestone.correctedAgeAtAchievement % 30
-              )}
+          <div className="space-y-1">
+            <p className="text-xs text-gray-500">
+              适龄范围: {Math.floor(milestone.ageRangeMin / 30)}个月 - {Math.floor(milestone.ageRangeMax / 30)}个月
             </p>
-          )}
+            {milestone.isCompleted && milestone.correctedAgeAtAchievement && (
+              <p className="text-xs text-green-600 font-medium">
+                ✅ 完成时矫正月龄: {formatAge(
+                  Math.floor(milestone.correctedAgeAtAchievement / 30), 
+                  milestone.correctedAgeAtAchievement % 30
+                )}
+              </p>
+            )}
+          </div>
         </div>
-        <div className="ml-4">
+        <div className="ml-3 flex-shrink-0">
           <button
             onClick={() => toggleMilestone(milestone.id, !milestone.isCompleted)}
-            className={`w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors ${
+            className={`w-10 h-10 rounded-full border-2 flex items-center justify-center transition-all touch-friendly active:scale-95 ${
               milestone.isCompleted
-                ? 'bg-green-500 border-green-500 text-white'
-                : 'border-gray-300 hover:border-green-500'
+                ? 'bg-green-500 border-green-500 text-white shadow-md'
+                : 'border-gray-300 hover:border-green-500 hover:bg-green-50 active:bg-green-100'
             }`}
           >
-            {milestone.isCompleted && (
-              <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+            {milestone.isCompleted ? (
+              <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
               </svg>
+            ) : (
+              <span className="text-gray-400 text-xl">○</span>
             )}
           </button>
         </div>
@@ -295,9 +306,8 @@ export default function MilestonesPage() {
         )}
 
         {dataLoading ? (
-          <div className="text-center py-20">
-            <div className="animate-spin w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto mb-4"></div>
-            <p className="text-gray-600">正在加载里程碑数据...</p>
+          <div className="py-20">
+            <LoadingSpinner size="lg" message="正在加载里程碑数据..." />
           </div>
         ) : milestoneData ? (
           <>
@@ -467,67 +477,123 @@ export default function MilestonesPage() {
               </div>
             </div>
 
-            {/* 选项卡导航 */}
-            <div className="bg-white rounded-xl shadow-sm p-1 mb-6 inline-flex">
-              <button
-                onClick={() => setActiveTab('inProgress')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'inProgress'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                进行中 ({milestoneData.statistics.inProgressCount})
-              </button>
-              <button
-                onClick={() => setActiveTab('upcoming')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'upcoming'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                即将到来 ({milestoneData.statistics.upcomingCount})
-              </button>
-              <button
-                onClick={() => setActiveTab('completed')}
-                className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
-                  activeTab === 'completed'
-                    ? 'bg-blue-500 text-white'
-                    : 'text-gray-600 hover:text-gray-800'
-                }`}
-              >
-                已完成 ({milestoneData.statistics.completedCount})
-              </button>
+            {/* 选项卡导航 - 移动端优化 */}
+            <div className="bg-white rounded-xl shadow-sm p-1 mb-6">
+              <div className="grid grid-cols-3 gap-1">
+                <button
+                  onClick={() => setActiveTab('inProgress')}
+                  className={`px-3 py-3 rounded-lg text-sm font-medium transition-all touch-friendly ${
+                    activeTab === 'inProgress'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-800 active:bg-gray-100'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg mb-1">🎯</div>
+                    <div className="text-xs">进行中</div>
+                    <div className="text-xs opacity-75">({milestoneData.statistics.inProgressCount})</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('upcoming')}
+                  className={`px-3 py-3 rounded-lg text-sm font-medium transition-all touch-friendly ${
+                    activeTab === 'upcoming'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-800 active:bg-gray-100'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg mb-1">⏳</div>
+                    <div className="text-xs">即将到来</div>
+                    <div className="text-xs opacity-75">({milestoneData.statistics.upcomingCount})</div>
+                  </div>
+                </button>
+                <button
+                  onClick={() => setActiveTab('completed')}
+                  className={`px-3 py-3 rounded-lg text-sm font-medium transition-all touch-friendly ${
+                    activeTab === 'completed'
+                      ? 'bg-blue-500 text-white shadow-md'
+                      : 'text-gray-600 hover:text-gray-800 active:bg-gray-100'
+                  }`}
+                >
+                  <div className="text-center">
+                    <div className="text-lg mb-1">🎉</div>
+                    <div className="text-xs">已完成</div>
+                    <div className="text-xs opacity-75">({milestoneData.statistics.completedCount})</div>
+                  </div>
+                </button>
+              </div>
             </div>
 
-            {/* 里程碑列表 */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {/* 里程碑列表 - 移动端优化 */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {activeTab === 'inProgress' && milestoneData.milestones.inProgress.map(renderMilestoneCard)}
               {activeTab === 'upcoming' && milestoneData.milestones.upcoming.map(renderMilestoneCard)}
               {activeTab === 'completed' && milestoneData.milestones.completed.map(renderMilestoneCard)}
               
               {milestoneData.milestones[activeTab].length === 0 && (
-                <div className="col-span-full text-center py-12">
-                  <div className="text-gray-400 text-4xl mb-4">
-                    {activeTab === 'inProgress' && '🎯'}
-                    {activeTab === 'upcoming' && '⏳'}
-                    {activeTab === 'completed' && '🎉'}
+                <div className="col-span-full">
+                  <div className="bg-white rounded-2xl shadow-lg p-8 text-center">
+                    <div className="text-6xl mb-4">
+                      {activeTab === 'inProgress' && '🎯'}
+                      {activeTab === 'upcoming' && '⏳'}
+                      {activeTab === 'completed' && '🎉'}
+                    </div>
+                    <h3 className="text-lg font-semibold text-gray-800 mb-2">
+                      {activeTab === 'inProgress' && '当前没有进行中的里程碑'}
+                      {activeTab === 'upcoming' && '暂无即将到来的里程碑'}
+                      {activeTab === 'completed' && '还没有完成任何里程碑'}
+                    </h3>
+                    <p className="text-gray-600 mb-6">
+                      {activeTab === 'inProgress' && '根据宝宝的矫正月龄，目前所有里程碑都已达成或尚未到时间'}
+                      {activeTab === 'upcoming' && '很快会有新的里程碑等待宝宝去完成'}
+                      {activeTab === 'completed' && '每一个小小的进步都值得庆祝，继续加油！'}
+                    </p>
+                    {activeTab !== 'completed' && (
+                      <div className="grid grid-cols-2 gap-3 mt-4">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setActiveTab('upcoming')}
+                          className="touch-friendly"
+                        >
+                          查看即将到来
+                        </Button>
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          onClick={() => setActiveTab('completed')}
+                          className="touch-friendly"
+                        >
+                          查看已完成
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  <p className="text-gray-600">
-                    {activeTab === 'inProgress' && '当前没有进行中的里程碑'}
-                    {activeTab === 'upcoming' && '暂无即将到来的里程碑'}
-                    {activeTab === 'completed' && '还没有完成任何里程碑，继续加油！'}
-                  </p>
                 </div>
               )}
             </div>
           </>
         ) : (
           <div className="text-center py-20">
-            <p className="text-gray-600">暂无数据</p>
+            <ErrorMessage 
+              message="无法加载里程碑数据，请稍后重试" 
+              onRetry={() => selectedBaby && fetchMilestones(selectedBaby)}
+            />
           </div>
         )}
+
+        {/* 浮动操作按钮 - 仅移动端 */}
+        <div className="fixed bottom-6 right-6 lg:hidden">
+          <button
+            onClick={() => router.push('/dashboard')}
+            className="bg-blue-500 hover:bg-blue-600 text-white p-4 rounded-full shadow-lg active:scale-95 transition-all touch-friendly"
+          >
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
+            </svg>
+          </button>
+        </div>
       </div>
     </div>
   );

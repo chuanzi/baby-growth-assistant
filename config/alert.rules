@@ -1,0 +1,68 @@
+# Prometheus告警规则
+
+groups:
+- name: baby-growth-assistant
+  rules:
+  # 应用程序告警
+  - alert: HighErrorRate
+    expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.1
+    for: 2m
+    labels:
+      severity: critical
+    annotations:
+      summary: "高错误率检测"
+      description: "应用程序错误率超过10%，持续2分钟"
+
+  - alert: HighResponseTime
+    expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 2
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "响应时间过长"
+      description: "95%的请求响应时间超过2秒"
+
+  - alert: DatabaseConnectionFailed
+    expr: up{job="postgres"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "数据库连接失败"
+      description: "PostgreSQL数据库不可访问"
+
+  - alert: HighMemoryUsage
+    expr: (node_memory_MemTotal_bytes - node_memory_MemAvailable_bytes) / node_memory_MemTotal_bytes > 0.85
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "内存使用率过高"
+      description: "系统内存使用率超过85%"
+
+  - alert: HighCPUUsage
+    expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+    for: 5m
+    labels:
+      severity: warning
+    annotations:
+      summary: "CPU使用率过高"
+      description: "CPU使用率超过80%，持续5分钟"
+
+  - alert: DiskSpaceLow
+    expr: (node_filesystem_avail_bytes{mountpoint="/"} / node_filesystem_size_bytes{mountpoint="/"}) * 100 < 15
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "磁盘空间不足"
+      description: "根分区剩余空间少于15%"
+
+  - alert: ApplicationDown
+    expr: up{job="baby-growth-app"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "应用程序宕机"
+      description: "宝宝成长助手应用程序无法访问"

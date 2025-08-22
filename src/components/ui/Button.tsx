@@ -1,54 +1,148 @@
-import { ButtonHTMLAttributes, forwardRef } from 'react';
+import { ButtonHTMLAttributes, forwardRef, ReactNode } from 'react';
 import { clsx } from 'clsx';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline';
-  size?: 'sm' | 'md' | 'lg';
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'destructive';
+  size?: 'sm' | 'md' | 'lg' | 'xl';
   loading?: boolean;
+  loadingText?: string;
+  leftIcon?: ReactNode;
+  rightIcon?: ReactNode;
+  fullWidth?: boolean;
 }
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant = 'primary', size = 'md', loading, children, disabled, ...props }, ref) => {
+  ({ 
+    className, 
+    variant = 'primary', 
+    size = 'md', 
+    loading, 
+    loadingText,
+    leftIcon,
+    rightIcon,
+    fullWidth = false,
+    children, 
+    disabled, 
+    ...props 
+  }, ref) => {
+    const isDisabled = disabled || loading;
+
     return (
       <button
         className={clsx(
-          'inline-flex items-center justify-center rounded-lg font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+          // Base styles
+          'inline-flex items-center justify-center rounded-lg font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+          
+          // Touch-friendly and accessibility
+          'touch-manipulation select-none',
+          'active:scale-95 disabled:active:scale-100',
+          
+          // Variants
           {
-            'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600': variant === 'primary',
-            'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-600': variant === 'secondary',
-            'border border-gray-300 bg-transparent hover:bg-gray-50 focus-visible:ring-gray-600': variant === 'outline',
-            'h-8 px-3 text-sm': size === 'sm',
-            'h-10 px-4': size === 'md',
-            'h-12 px-6 text-lg': size === 'lg',
+            // Primary
+            'bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-600 shadow-sm hover:shadow-md active:shadow-sm': variant === 'primary',
+            
+            // Secondary  
+            'bg-gray-100 text-gray-900 hover:bg-gray-200 focus-visible:ring-gray-600 shadow-sm hover:shadow-md active:shadow-sm': variant === 'secondary',
+            
+            // Outline
+            'border border-gray-300 bg-transparent text-gray-700 hover:bg-gray-50 focus-visible:ring-gray-600 hover:border-gray-400': variant === 'outline',
+            
+            // Ghost
+            'text-gray-700 hover:bg-gray-100 focus-visible:ring-gray-600': variant === 'ghost',
+            
+            // Destructive
+            'bg-red-600 text-white hover:bg-red-700 focus-visible:ring-red-600 shadow-sm hover:shadow-md active:shadow-sm': variant === 'destructive',
           },
+          
+          // Sizes
+          {
+            'h-8 px-3 text-sm gap-1.5': size === 'sm',
+            'h-10 px-4 text-sm gap-2': size === 'md',
+            'h-12 px-6 text-base gap-2': size === 'lg',
+            'h-14 px-8 text-lg gap-3': size === 'xl',
+          },
+          
+          // Full width
+          {
+            'w-full': fullWidth,
+          },
+          
+          // Loading state
+          {
+            'cursor-wait': loading,
+          },
+          
           className
         )}
-        disabled={disabled || loading}
+        disabled={isDisabled}
         ref={ref}
         {...props}
       >
+        {/* Left icon or loading spinner */}
         {loading ? (
-          <svg className="mr-2 h-4 w-4 animate-spin" viewBox="0 0 24 24">
-            <circle
-              className="opacity-25"
-              cx="12"
-              cy="12"
-              r="10"
-              stroke="currentColor"
-              strokeWidth="4"
-              fill="none"
-            />
-            <path
-              className="opacity-75"
-              fill="currentColor"
-              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-            />
-          </svg>
+          <LoadingSpinner 
+            size={size === 'sm' ? 'sm' : 'md'} 
+            className="text-current"
+          />
+        ) : leftIcon ? (
+          <span className="flex-shrink-0">{leftIcon}</span>
         ) : null}
-        {children}
+        
+        {/* Button content */}
+        <span className={clsx(
+          'truncate',
+          loading && loadingText && 'animate-pulse'
+        )}>
+          {loading && loadingText ? loadingText : children}
+        </span>
+        
+        {/* Right icon */}
+        {!loading && rightIcon && (
+          <span className="flex-shrink-0">{rightIcon}</span>
+        )}
       </button>
     );
   }
 );
 
 Button.displayName = 'Button';
+
+// Specialized button variants
+export const IconButton = forwardRef<HTMLButtonElement, ButtonProps & { icon: ReactNode; 'aria-label': string }>(
+  ({ icon, className, size = 'md', ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        className={clsx('aspect-square p-0', className)}
+        size={size}
+        {...props}
+      >
+        {icon}
+      </Button>
+    );
+  }
+);
+
+IconButton.displayName = 'IconButton';
+
+export const FloatingActionButton = forwardRef<HTMLButtonElement, ButtonProps>(
+  ({ className, children, ...props }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        className={clsx(
+          'fixed bottom-6 right-6 h-14 w-14 rounded-full shadow-lg hover:shadow-xl transition-all duration-200',
+          'z-50 lg:hidden',
+          className
+        )}
+        {...props}
+      >
+        {children}
+      </Button>
+    );
+  }
+);
+
+FloatingActionButton.displayName = 'FloatingActionButton';

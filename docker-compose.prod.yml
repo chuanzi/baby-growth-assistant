@@ -1,0 +1,219 @@
+# 宝宝成长助手生产环境Docker Compose配置
+# 包含应用、数据库、Redis缓存和监控组件
+
+version: '3.8'
+
+services:
+  # 应用服务
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+    container_name: baby-growth-app
+    restart: unless-stopped
+    depends_on:
+      - db
+      - redis
+    environment:
+      - NODE_ENV=production
+      - DATABASE_URL=postgresql://postgres:${POSTGRES_PASSWORD}@db:5432/baby_growth_assistant
+      - JWT_SECRET=${JWT_SECRET}
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - "3000:3000"
+    networks:
+      - baby-growth-network
+    volumes:
+      - app-logs:/app/logs
+    healthcheck:
+      test: ["CMD", "/app/health-check.sh"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # PostgreSQL数据库
+  db:
+    image: postgres:16-alpine
+    container_name: baby-growth-db
+    restart: unless-stopped
+    environment:
+      - POSTGRES_DB=baby_growth_assistant
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_INITDB_ARGS=--encoding=UTF-8 --lc-collate=C --lc-ctype=C
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./prisma/migration-to-postgresql.sql:/docker-entrypoint-initdb.d/init.sql
+      - postgres-logs:/var/log/postgresql
+    networks:
+      - baby-growth-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d baby_growth_assistant"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    # PostgreSQL性能优化
+    command: >
+      postgres
+      -c shared_buffers=256MB
+      -c max_connections=200
+      -c effective_cache_size=1GB
+      -c maintenance_work_mem=64MB
+      -c checkpoint_completion_target=0.9
+      -c wal_buffers=16MB
+      -c default_statistics_target=100
+      -c random_page_cost=1.1
+      -c effective_io_concurrency=200
+      -c work_mem=4MB
+      -c min_wal_size=1GB
+      -c max_wal_size=4GB
+      -c logging_collector=on
+      -c log_directory=/var/log/postgresql
+      -c log_filename=postgresql-%Y-%m-%d_%H%M%S.log
+
+  # Redis缓存
+  redis:
+    image: redis:7-alpine
+    container_name: baby-growth-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+      - ./config/redis.conf:/usr/local/etc/redis/redis.conf
+    networks:
+      - baby-growth-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    command: redis-server /usr/local/etc/redis/redis.conf
+
+  # Nginx反向代理
+  nginx:
+    image: nginx:alpine
+    container_name: baby-growth-nginx
+    restart: unless-stopped
+    depends_on:
+      - app
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./config/nginx.conf:/etc/nginx/nginx.conf
+      - ./config/nginx-site.conf:/etc/nginx/conf.d/default.conf
+      - nginx-logs:/var/log/nginx
+      - ssl-certs:/etc/nginx/ssl
+    networks:
+      - baby-growth-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # 监控 - Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: baby-growth-prometheus
+    restart: unless-stopped
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./config/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus-data:/prometheus
+    networks:
+      - baby-growth-network
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/etc/prometheus/console_libraries'
+      - '--web.console.templates=/etc/prometheus/consoles'
+      - '--storage.tsdb.retention.time=200h'
+      - '--web.enable-lifecycle'
+
+  # 可视化 - Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: baby-growth-grafana
+    restart: unless-stopped
+    depends_on:
+      - prometheus
+    ports:
+      - "3001:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./config/grafana:/etc/grafana/provisioning
+    networks:
+      - baby-growth-network
+
+  # 日志收集 - Loki
+  loki:
+    image: grafana/loki:latest
+    container_name: baby-growth-loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    volumes:
+      - loki-data:/loki
+      - ./config/loki.yml:/etc/loki/local-config.yaml
+    networks:
+      - baby-growth-network
+    command: -config.file=/etc/loki/local-config.yaml
+
+  # 备份服务
+  backup:
+    image: postgres:16-alpine
+    container_name: baby-growth-backup
+    restart: "no"
+    depends_on:
+      - db
+    environment:
+      - PGPASSWORD=${POSTGRES_PASSWORD}
+    volumes:
+      - postgres-backups:/backups
+      - ./scripts/backup.sh:/backup.sh
+    networks:
+      - baby-growth-network
+    entrypoint: /backup.sh
+    profiles:
+      - backup
+
+# 网络配置
+networks:
+  baby-growth-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# 数据卷配置
+volumes:
+  postgres-data:
+    driver: local
+  postgres-logs:
+    driver: local
+  postgres-backups:
+    driver: local
+  redis-data:
+    driver: local
+  app-logs:
+    driver: local
+  nginx-logs:
+    driver: local
+  ssl-certs:
+    driver: local
+  prometheus-data:
+    driver: local
+  grafana-data:
+    driver: local
+  loki-data:
+    driver: local

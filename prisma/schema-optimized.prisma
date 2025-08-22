@@ -1,0 +1,342 @@
+// 优化后的 Prisma Schema
+// 包含性能优化、缺失字段补充和新增数据模型
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  phone     String?  @unique
+  email     String?  @unique
+  password  String?
+  
+  // 新增用户资料字段
+  nickname  String?  // 用户昵称
+  avatar    String?  // 头像URL
+  timezone  String   @default("Asia/Shanghai") // 时区设置
+  
+  // 隐私和通知设置
+  privacySettings   Json?    // 隐私设置JSON
+  notificationSettings Json? // 通知设置JSON
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // 关系
+  babies    Baby[]
+  userSessions UserSession[]
+  
+  // 索引优化
+  @@index([phone])
+  @@index([email])
+  @@map("users")
+}
+
+model UserSession {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  deviceInfo String? // 设备信息
+  ipAddress  String? // IP地址
+  
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@index([userId])
+  @@index([token])
+  @@index([expiresAt])
+  @@map("user_sessions")
+}
+
+model Baby {
+  id                String   @id @default(cuid())
+  userId            String
+  name              String
+  birthDate         DateTime
+  gestationalWeeks  Int
+  gestationalDays   Int      @default(0)
+  
+  // 新增宝宝详细信息
+  gender           String?   // 性别：'male', 'female', 'unknown'
+  birthWeight      Float?    // 出生体重(g)
+  birthHeight      Float?    // 出生身长(cm)
+  birthHeadCirc    Float?    // 出生头围(cm)
+  
+  // NICU相关信息
+  nicuAdmission    Boolean  @default(false) // 是否入住NICU
+  nicuDuration     Int?     // NICU住院天数
+  medicalConditions String? // 医疗状况
+  
+  // 状态字段
+  isActive         Boolean  @default(true)  // 是否活跃档案
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  // 关系
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  feedingRecords   FeedingRecord[]
+  sleepRecords     SleepRecord[]
+  growthRecords    GrowthRecord[]    // 新增
+  milestoneRecords BabyMilestone[]
+  medicalRecords   MedicalRecord[]   // 新增
+  
+  // 性能优化索引
+  @@index([userId, isActive])
+  @@index([userId, createdAt])
+  @@map("babies")
+}
+
+model FeedingRecord {
+  id               String   @id @default(cuid())
+  babyId           String
+  type             String   // 'breast', 'formula', 'solid'
+  
+  // 优化：分离数量和持续时间为不同字段
+  amount           Float?   // 奶量(ml)
+  duration         Int?     // 持续时间(分钟)
+  
+  // 新增详细信息
+  feedingMethod    String?  // 'bottle', 'breast_direct', 'tube' 等
+  temperature      String?  // 'warm', 'room_temp', 'cold'
+  difficulty       String?  // 'easy', 'moderate', 'difficult'
+  
+  timestamp        DateTime @default(now())
+  notes            String?
+  
+  // 数据质量字段
+  dataSource       String   @default("manual") // 'manual', 'imported', 'auto'
+  
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  
+  // 关键性能索引
+  @@index([babyId, timestamp(sort: Desc)]) // 优化分页查询
+  @@index([babyId, type, timestamp])       // 优化统计查询
+  @@index([timestamp])                     // 优化日期范围查询
+  @@map("feeding_records")
+}
+
+model SleepRecord {
+  id              String   @id @default(cuid())
+  babyId          String
+  startTime       DateTime
+  endTime         DateTime
+  durationMinutes Int
+  
+  // 新增睡眠质量指标
+  sleepQuality    String?  // 'excellent', 'good', 'fair', 'poor'
+  sleepType       String?  // 'nap', 'night_sleep'
+  wakeupReason    String?  // 'natural', 'hunger', 'diaper', 'noise', 'other'
+  
+  // 睡眠环境
+  environment     String?  // 'crib', 'parent_bed', 'stroller', 'other'
+  
+  timestamp       DateTime @default(now())
+  notes           String?
+  
+  // 数据质量字段
+  dataSource      String   @default("manual")
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  
+  // 性能索引
+  @@index([babyId, startTime(sort: Desc)])
+  @@index([babyId, sleepType, startTime])
+  @@map("sleep_records")
+}
+
+// 新增：生长记录模型
+model GrowthRecord {
+  id           String   @id @default(cuid())
+  babyId       String
+  
+  // 生长指标
+  weight       Float?   // 体重(g)
+  height       Float?   // 身长(cm)
+  headCirc     Float?   // 头围(cm)
+  
+  // 测量信息
+  measureDate  DateTime
+  measureBy    String?  // 测量者：'parent', 'doctor', 'nurse'
+  location     String?  // 测量地点：'home', 'clinic', 'hospital'
+  
+  // 矫正月龄记录
+  correctedAgeInDays Int
+  
+  notes        String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  
+  @@index([babyId, measureDate(sort: Desc)])
+  @@index([babyId, correctedAgeInDays])
+  @@map("growth_records")
+}
+
+// 新增：医疗记录模型
+model MedicalRecord {
+  id              String   @id @default(cuid())
+  babyId          String
+  
+  recordType      String   // 'checkup', 'vaccination', 'illness', 'medication'
+  title           String
+  description     String?
+  
+  // 医疗信息
+  doctor          String?  // 医生姓名
+  hospital        String?  // 医院/诊所
+  diagnosis       String?  // 诊断
+  treatment       String?  // 治疗方案
+  medication      String?  // 用药信息
+  
+  // 时间信息
+  recordDate      DateTime
+  followupDate    DateTime? // 复查日期
+  
+  // 文件附件
+  attachments     Json?    // 附件信息JSON数组
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  
+  @@index([babyId, recordType, recordDate])
+  @@index([babyId, recordDate(sort: Desc)])
+  @@map("medical_records")
+}
+
+model Milestone {
+  id          String @id @default(cuid())
+  ageRangeMin Int    // 最小矫正月龄(天数)
+  ageRangeMax Int    // 最大矫正月龄(天数)
+  title       String
+  description String
+  category    String // 'motor', 'cognitive', 'social', 'language'
+  
+  // 新增里程碑详细信息
+  priority    String @default("normal") // 'critical', 'important', 'normal'
+  difficulty  String @default("normal") // 'easy', 'normal', 'hard'
+  tips        String? // 引导技巧
+  warningSign String? // 预警信号
+  
+  // 元数据
+  isActive    Boolean @default(true)
+  version     String  @default("1.0")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  babyMilestones BabyMilestone[]
+  
+  // 优化里程碑查询的复合索引
+  @@index([ageRangeMin, ageRangeMax, category])
+  @@index([category, priority, isActive])
+  @@map("milestones")
+}
+
+model BabyMilestone {
+  id                        String    @id @default(cuid())
+  babyId                    String
+  milestoneId               String
+  
+  // 完成信息
+  achievedAt                DateTime?
+  correctedAgeAtAchievement Int?
+  
+  // 新增评估信息
+  achievementQuality        String?   // 'excellent', 'good', 'minimal'
+  parentNotes               String?   // 家长备注
+  assessmentBy              String?   // 评估者
+  
+  // 提醒和跟踪
+  reminderSet               Boolean   @default(false)
+  reminderDate              DateTime?
+  
+  createdAt                 DateTime  @default(now())
+  updatedAt                 DateTime  @updatedAt
+  
+  baby      Baby      @relation(fields: [babyId], references: [id], onDelete: Cascade)
+  milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
+  
+  // 性能和约束索引
+  @@unique([babyId, milestoneId])
+  @@index([babyId, achievedAt])
+  @@index([babyId, correctedAgeAtAchievement])
+  @@map("baby_milestones")
+}
+
+// 新增：数据导出记录模型
+model DataExport {
+  id          String   @id @default(cuid())
+  userId      String
+  babyId      String?  // 可选，全部宝宝数据时为null
+  
+  exportType  String   // 'pdf', 'excel', 'csv', 'json'
+  dataTypes   Json     // 导出的数据类型数组
+  dateRange   Json     // 日期范围设置
+  
+  status      String   @default("processing") // 'processing', 'completed', 'failed'
+  fileUrl     String?  // 生成文件的URL
+  errorMessage String? // 错误信息
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  expiresAt   DateTime // 文件过期时间
+  
+  @@index([userId, status, createdAt])
+  @@index([expiresAt]) // 清理过期文件
+  @@map("data_exports")
+}
+
+// 新增：应用配置模型
+model AppConfig {
+  id          String   @id @default(cuid())
+  key         String   @unique
+  value       Json
+  description String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("app_configs")
+}
+
+// 新增：用户反馈模型
+model UserFeedback {
+  id          String   @id @default(cuid())
+  userId      String?  // 可选，匿名反馈时为null
+  
+  feedbackType String  // 'bug', 'feature_request', 'general'
+  title       String
+  description String
+  priority    String   @default("medium") // 'low', 'medium', 'high'
+  
+  status      String   @default("open") // 'open', 'in_progress', 'resolved', 'closed'
+  adminNotes  String?  // 管理员备注
+  
+  // 设备和环境信息
+  deviceInfo  Json?
+  appVersion  String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@index([status, priority, createdAt])
+  @@index([feedbackType, createdAt])
+  @@map("user_feedback")
+}

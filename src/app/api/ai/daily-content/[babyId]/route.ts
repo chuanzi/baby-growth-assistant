@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
-import { AIContentGenerator } from '@/lib/ai';
+import { aiContentGenerator } from '@/lib/ai';
+import { rateLimiter, createRateLimitResponse } from '@/lib/rate-limiter';
 
 export async function GET(
   request: NextRequest,
@@ -10,6 +11,13 @@ export async function GET(
   try {
     // 验证用户身份
     const session = await requireAuth();
+    const userId = session.userId as string;
+    
+    // 检查请求频率限制
+    const rateLimitCheck = rateLimiter.checkAIDailyContent(userId);
+    if (!rateLimitCheck.allowed) {
+      return createRateLimitResponse(rateLimitCheck);
+    }
     
     const { babyId } = await params;
     
@@ -66,8 +74,7 @@ export async function GET(
     });
 
     // 生成AI内容
-    const aiGenerator = new AIContentGenerator();
-    const content = await aiGenerator.generateDailyCard(
+    const content = await aiContentGenerator.generateDailyCard(
       baby,
       recentFeeding,
       recentSleep,

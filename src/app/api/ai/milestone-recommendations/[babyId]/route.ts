@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
-import { AIContentGenerator } from '@/lib/ai';
+import { aiContentGenerator } from '@/lib/ai';
 import { calculateAge } from '@/utils/age-calculator';
+import { rateLimiter, createRateLimitResponse } from '@/lib/rate-limiter';
 
 export async function GET(
   request: NextRequest,
@@ -11,6 +12,13 @@ export async function GET(
   try {
     // 验证用户身份
     const session = await requireAuth();
+    const userId = session.userId as string;
+    
+    // 检查请求频率限制
+    const rateLimitCheck = rateLimiter.checkAIMilestone(userId);
+    if (!rateLimitCheck.allowed) {
+      return createRateLimitResponse(rateLimitCheck);
+    }
     
     const { babyId } = await params;
     
@@ -93,8 +101,7 @@ export async function GET(
     );
 
     // 使用AI生成个性化推荐
-    const aiGenerator = new AIContentGenerator();
-    const recommendation = await aiGenerator.generateMilestoneRecommendation(
+    const recommendation = await aiContentGenerator.generateMilestoneRecommendation(
       baby,
       baby.milestoneRecords.map((mr: typeof baby.milestoneRecords[0]) => ({
         id: mr.id,

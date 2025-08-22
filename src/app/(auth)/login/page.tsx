@@ -130,79 +130,139 @@ export default function LoginPage() {
   };
 
   return (
-    <div>
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">欢迎回来</h2>
-        <p className="text-gray-600">请选择登录方式</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4">👶</div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+              宝宝成长助手
+            </h1>
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">欢迎回来</h2>
+            <p className="text-gray-600 text-sm">请选择登录方式继续使用</p>
+          </div>
 
-      <AuthMethodSelector 
-        selectedMethod={authMethod}
-        onMethodChange={handleMethodChange}
-        className="mb-6"
-      />
-
-      {authMethod === 'phone' ? (
-        <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-6">
-          <PhoneInput
-            phone={phoneForm.watch('phone')}
-            verificationCode={phoneForm.watch('verificationCode')}
-            onPhoneChange={(value) => phoneForm.setValue('phone', value)}
-            onVerificationCodeChange={(value) => phoneForm.setValue('verificationCode', value)}
-            onSendCode={handleSendCode}
-            phoneError={phoneForm.formState.errors.phone?.message}
-            codeError={phoneForm.formState.errors.verificationCode?.message}
-            loading={loading}
-            codeSent={codeSent}
+          <AuthMethodSelector 
+            selectedMethod={authMethod}
+            onMethodChange={handleMethodChange}
+            className="mb-6"
           />
 
-          <Button
-            type="submit"
-            className="w-full"
-            loading={loading}
-            disabled={!codeSent || !phoneForm.watch('verificationCode')}
-          >
-            登录
-          </Button>
-        </form>
-      ) : (
-        <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-6">
-          <EmailInput
-            email={emailForm.watch('email')}
-            password={emailForm.watch('password')}
-            onEmailChange={(value) => emailForm.setValue('email', value)}
-            onPasswordChange={(value) => emailForm.setValue('password', value)}
-            emailError={emailForm.formState.errors.email?.message}
-            passwordError={emailForm.formState.errors.password?.message}
-          />
+          {authMethod === 'phone' ? (
+            <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-6">
+              <PhoneInput
+                phone={phoneForm.watch('phone')}
+                verificationCode={phoneForm.watch('verificationCode')}
+                onPhoneChange={(value) => phoneForm.setValue('phone', value)}
+                onVerificationCodeChange={(value) => phoneForm.setValue('verificationCode', value)}
+                onSendCode={handleSendCode}
+                phoneError={phoneForm.formState.errors.phone?.message}
+                codeError={phoneForm.formState.errors.verificationCode?.message}
+                loading={loading}
+                codeSent={codeSent}
+              />
 
-          <Button
-            type="submit"
-            className="w-full"
-            loading={loading}
-            disabled={!emailForm.watch('email') || !emailForm.watch('password')}
-          >
-            登录
-          </Button>
-        </form>
-      )}
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                loading={loading}
+                disabled={!codeSent || !phoneForm.watch('verificationCode')}
+              >
+                {loading ? '登录中...' : '登录'}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-6">
+              <EmailInput
+                email={emailForm.watch('email')}
+                password={emailForm.watch('password')}
+                onEmailChange={(value) => emailForm.setValue('email', value)}
+                onPasswordChange={(value) => emailForm.setValue('password', value)}
+                emailError={emailForm.formState.errors.email?.message}
+                passwordError={emailForm.formState.errors.password?.message}
+              />
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-4">
-          {error}
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                loading={loading}
+                disabled={!emailForm.watch('email') || !emailForm.watch('password')}
+              >
+                {loading ? '登录中...' : '登录'}
+              </Button>
+            </form>
+          )}
+
+          {/* Enhanced error display */}
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mt-6 rounded-r-lg">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800 font-medium">登录失败</p>
+                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success feedback for code sent */}
+          {codeSent && !error && (
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mt-6 rounded-r-lg">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-green-800 font-medium">验证码已发送</p>
+                  <p className="text-sm text-green-700">请查看短信并输入验证码</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-600 text-sm">
+              还没有账户？
+              <Link
+                href="/register"
+                className="text-blue-600 hover:text-blue-700 font-medium ml-1 hover:underline"
+              >
+                立即注册
+              </Link>
+            </p>
+          </div>
+
+          {/* Help section */}
+          <div className="mt-6 pt-6 border-t border-gray-100">
+            <div className="text-center">
+              <p className="text-xs text-gray-500 mb-2">需要帮助？</p>
+              <div className="flex justify-center space-x-4 text-xs">
+                <button className="text-blue-600 hover:text-blue-700 hover:underline">
+                  忘记密码
+                </button>
+                <button className="text-blue-600 hover:text-blue-700 hover:underline">
+                  联系客服
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
-      )}
 
-      <div className="mt-6 text-center">
-        <p className="text-gray-600">
-          还没有账户？
-          <Link
-            href="/register"
-            className="text-blue-600 hover:text-blue-700 font-medium ml-1"
-          >
-            立即注册
-          </Link>
-        </p>
+        {/* Additional info */}
+        <div className="text-center mt-4 text-xs text-gray-500">
+          登录即表示同意我们的{' '}
+          <button className="text-blue-600 hover:underline">服务条款</button> 和{' '}
+          <button className="text-blue-600 hover:underline">隐私政策</button>
+        </div>
       </div>
     </div>
   );

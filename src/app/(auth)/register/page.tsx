@@ -139,88 +139,161 @@ export default function RegisterPage() {
   };
 
   return (
-    <div>
-      <div className="text-center mb-6">
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">创建账户</h2>
-        <p className="text-gray-600">请选择注册方式</p>
-      </div>
+    <div className="min-h-screen bg-gradient-to-br from-pink-50 to-blue-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        <div className="bg-white rounded-2xl shadow-xl p-6 sm:p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="text-5xl mb-4">👶</div>
+            <h1 className="text-2xl sm:text-3xl font-bold text-gray-800 mb-2">
+              宝宝成长助手
+            </h1>
+            <h2 className="text-lg font-semibold text-gray-700 mb-2">创建账户</h2>
+            <p className="text-gray-600 text-sm">选择注册方式，开始记录宝宝成长</p>
+          </div>
 
-      <AuthMethodSelector 
-        selectedMethod={authMethod}
-        onMethodChange={handleMethodChange}
-        className="mb-6"
-      />
-
-      {authMethod === 'phone' ? (
-        <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-6">
-          <PhoneInput
-            phone={phoneForm.watch('phone')}
-            verificationCode={phoneForm.watch('verificationCode')}
-            onPhoneChange={(value) => phoneForm.setValue('phone', value)}
-            onVerificationCodeChange={(value) => phoneForm.setValue('verificationCode', value)}
-            onSendCode={handleSendCode}
-            phoneError={phoneForm.formState.errors.phone?.message}
-            codeError={phoneForm.formState.errors.verificationCode?.message}
-            loading={loading}
-            codeSent={codeSent}
+          <AuthMethodSelector 
+            selectedMethod={authMethod}
+            onMethodChange={handleMethodChange}
+            className="mb-6"
           />
 
-          <Button
-            type="submit"
-            className="w-full"
-            loading={loading}
-            disabled={!codeSent || !phoneForm.watch('verificationCode')}
-          >
-            注册
-          </Button>
-        </form>
-      ) : (
-        <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-6">
-          <EmailInput
-            email={emailForm.watch('email')}
-            password={emailForm.watch('password')}
-            confirmPassword={emailForm.watch('confirmPassword')}
-            onEmailChange={(value) => emailForm.setValue('email', value)}
-            onPasswordChange={(value) => emailForm.setValue('password', value)}
-            onConfirmPasswordChange={(value) => emailForm.setValue('confirmPassword', value)}
-            emailError={emailForm.formState.errors.email?.message}
-            passwordError={emailForm.formState.errors.password?.message}
-            confirmPasswordError={emailForm.formState.errors.confirmPassword?.message}
-            isRegister={true}
-          />
+          {authMethod === 'phone' ? (
+            <form onSubmit={phoneForm.handleSubmit(onPhoneSubmit)} className="space-y-6">
+              <PhoneInput
+                phone={phoneForm.watch('phone')}
+                verificationCode={phoneForm.watch('verificationCode')}
+                onPhoneChange={(value) => phoneForm.setValue('phone', value)}
+                onVerificationCodeChange={(value) => phoneForm.setValue('verificationCode', value)}
+                onSendCode={handleSendCode}
+                phoneError={phoneForm.formState.errors.phone?.message}
+                codeError={phoneForm.formState.errors.verificationCode?.message}
+                loading={loading}
+                codeSent={codeSent}
+              />
 
-          <Button
-            type="submit"
-            className="w-full"
-            loading={loading}
-            disabled={!emailForm.watch('email') || !emailForm.watch('password') || !emailForm.watch('confirmPassword')}
-          >
-            注册
-          </Button>
-        </form>
-      )}
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                loading={loading}
+                disabled={!codeSent || !phoneForm.watch('verificationCode')}
+              >
+                {loading ? '注册中...' : '创建账户'}
+              </Button>
+            </form>
+          ) : (
+            <form onSubmit={emailForm.handleSubmit(onEmailSubmit)} className="space-y-6">
+              <EmailInput
+                email={emailForm.watch('email')}
+                password={emailForm.watch('password')}
+                confirmPassword={emailForm.watch('confirmPassword')}
+                onEmailChange={(value) => emailForm.setValue('email', value)}
+                onPasswordChange={(value) => emailForm.setValue('password', value)}
+                onConfirmPasswordChange={(value) => emailForm.setValue('confirmPassword', value)}
+                emailError={emailForm.formState.errors.email?.message}
+                passwordError={emailForm.formState.errors.password?.message}
+                confirmPasswordError={emailForm.formState.errors.confirmPassword?.message}
+                isRegister={true}
+              />
 
-      {error && (
-        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg mt-4">
-          {error}
+              <Button
+                type="submit"
+                className="w-full h-12 text-base font-medium"
+                loading={loading}
+                disabled={!emailForm.watch('email') || !emailForm.watch('password') || !emailForm.watch('confirmPassword')}
+              >
+                {loading ? '注册中...' : '创建账户'}
+              </Button>
+            </form>
+          )}
+
+          {/* Enhanced error display */}
+          {error && (
+            <div className="bg-red-50 border-l-4 border-red-400 p-4 mt-6 rounded-r-lg">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-red-800 font-medium">注册失败</p>
+                  <p className="text-sm text-red-700 mt-1">{error}</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Success feedback for code sent */}
+          {codeSent && !error && (
+            <div className="bg-green-50 border-l-4 border-green-400 p-4 mt-6 rounded-r-lg">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <svg className="h-5 w-5 text-green-400" viewBox="0 0 20 20" fill="currentColor">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                </div>
+                <div className="ml-3">
+                  <p className="text-sm text-green-800 font-medium">验证码已发送</p>
+                  <p className="text-sm text-green-700">请查看短信并输入验证码</p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Security notice */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-6">
+            <div className="flex items-start gap-3">
+              <div className="text-blue-600 text-xl flex-shrink-0">🛡️</div>
+              <div className="text-sm text-blue-800">
+                <p className="font-medium mb-1">安全承诺</p>
+                <ul className="text-xs space-y-1 text-blue-700">
+                  <li>• 所有数据加密传输和存储</li>
+                  <li>• 严格遵循数据保护法规</li>
+                  <li>• 专为早产儿家庭设计</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+
+          {/* Footer */}
+          <div className="mt-8 text-center">
+            <p className="text-gray-600 text-sm">
+              已有账户？
+              <Link
+                href="/login"
+                className="text-blue-600 hover:text-blue-700 font-medium ml-1 hover:underline"
+              >
+                立即登录
+              </Link>
+            </p>
+          </div>
+
+          {/* Terms */}
+          <div className="mt-6 pt-6 border-t border-gray-100 text-center">
+            <p className="text-xs text-gray-500">
+              注册即表示同意我们的{' '}
+              <button className="text-blue-600 hover:underline">服务条款</button> 和{' '}
+              <button className="text-blue-600 hover:underline">隐私政策</button>
+            </p>
+          </div>
         </div>
-      )}
 
-      <div className="text-sm text-gray-600 bg-blue-50 p-3 rounded-lg mt-4">
-        <p>📱 注册即表示您同意我们的服务条款和隐私政策</p>
-        <p className="mt-1">🔒 您的信息将被安全保护</p>
-      </div>
-
-      <div className="mt-6 text-center">
-        <p className="text-gray-600">
-          已有账户？
-          <Link
-            href="/login"
-            className="text-blue-600 hover:text-blue-700 font-medium ml-1"
-          >
-            立即登录
-          </Link>
-        </p>
+        {/* Features preview */}
+        <div className="mt-6 grid grid-cols-3 gap-3 text-center">
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3">
+            <div className="text-2xl mb-1">📊</div>
+            <div className="text-xs text-gray-700 font-medium">成长追踪</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3">
+            <div className="text-2xl mb-1">🎯</div>
+            <div className="text-xs text-gray-700 font-medium">里程碑</div>
+          </div>
+          <div className="bg-white/80 backdrop-blur-sm rounded-lg p-3">
+            <div className="text-2xl mb-1">🤖</div>
+            <div className="text-xs text-gray-700 font-medium">AI指导</div>
+          </div>
+        </div>
       </div>
     </div>
   );

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { prisma } from '@/lib/prisma';
+import { optimizedPrisma, createCachedQuery } from '@/lib/prisma';
 import { requireAuth } from '@/lib/auth';
 import { babyProfileSchema } from '@/lib/validations';
+import { withCache, cachePresets, cacheInvalidator } from '@/lib/api-cache';
 
 export async function POST(request: NextRequest) {
   try {
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest) {
       gestationalDays: validatedData.gestationalDays,
     });
 
-    const baby = await prisma.baby.create({
+    const baby = await optimizedPrisma.baby.create({
       data: {
         userId: session.userId as string,
         name: validatedData.name,
@@ -42,6 +43,9 @@ export async function POST(request: NextRequest) {
     });
 
     console.log('Created baby object:', baby);
+
+    // 创建新婴儿后，清除相关缓存
+    cacheInvalidator.invalidateByTags(['baby', 'user']);
 
     return NextResponse.json({
       success: true,
@@ -88,20 +92,34 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+// 优化的GET请求，使用缓存
+export const GET = withCache(cachePresets.babyData)(async function() {
   try {
     // 验证用户身份
     const session = await requireAuth();
     
-    // 获取用户的所有宝宝档案
-    const babies = await prisma.baby.findMany({
-      where: {
-        userId: session.userId as string,
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
-    });
+    // 使用缓存查询获取用户的所有宝宝档案
+    const babies = await createCachedQuery(
+      () => optimizedPrisma.baby.findMany({
+        where: {
+          userId: session.userId as string,
+        },
+        orderBy: {
+          createdAt: 'desc',
+        },
+        select: {
+          id: true,
+          name: true,
+          birthDate: true,
+          gestationalWeeks: true,
+          gestationalDays: true,
+          createdAt: true,
+          updatedAt: true,
+        }
+      }),
+      `babies:${session.userId}`,
+      2 * 60 * 1000 // 2分钟缓存
+    );
 
     return NextResponse.json({
       success: true,
@@ -131,4 +149,4 @@ export async function GET() {
       { status: 500 }
     );
   }
-}
+});
