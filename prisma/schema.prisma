@@ -6,7 +6,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -14,7 +14,7 @@ model User {
   id        String   @id @default(cuid())
   phone     String?  @unique // 可选，支持邮箱注册用户
   email     String?  @unique // 邮箱登录
-  password  String?  // 密码哈希，仅邮箱用户使用
+  password  String   // 密码哈希，必需字段
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
   babies    Baby[]
@@ -22,6 +22,7 @@ model User {
   // 确保用户至少有一种认证方式
   @@index([phone])
   @@index([email])
+  @@map("User")
 }
 
 model Baby {
@@ -39,7 +40,7 @@ model Baby {
   sleepRecords    SleepRecord[]
   milestoneRecords BabyMilestone[]
 
-  @@map("babies")
+  @@map("Baby")
 }
 
 model FeedingRecord {
@@ -49,50 +50,58 @@ model FeedingRecord {
   amountOrDuration String   // 奶量(ml) 或 时长(分钟)，存储为字符串便于灵活处理
   timestamp        DateTime @default(now())
   notes            String?  // 备注
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 
   baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
 
-  @@map("feeding_records")
+  @@map("FeedingRecord")
 }
 
 model SleepRecord {
-  id              String   @id @default(cuid())
-  babyId          String
-  startTime       DateTime
-  endTime         DateTime
-  durationMinutes Int      // 睡眠时长(分钟)
-  timestamp       DateTime @default(now())
-  notes           String?  // 备注
+  id        String   @id @default(cuid())
+  babyId    String
+  startTime DateTime
+  endTime   DateTime
+  timestamp DateTime @default(now())
+  notes     String?  // 备注
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   baby Baby @relation(fields: [babyId], references: [id], onDelete: Cascade)
 
-  @@map("sleep_records")
+  @@map("SleepRecord")
 }
 
 model Milestone {
-  id          String @id @default(cuid())
-  ageRangeMin Int    // 最小矫正月龄(天数)
-  ageRangeMax Int    // 最大矫正月龄(天数)
-  title       String
-  description String
-  category    String // 'motor', 'cognitive', 'social', 'language'
+  id           String  @id @default(cuid())
+  title        String
+  description  String
+  category     String  // 'motor', 'cognitive', 'social', 'language', 'health'
+  minAgeWeeks  Int     // 最小矫正月龄(周)
+  maxAgeWeeks  Int?    // 最大矫正月龄(周)
+  correctedAge Boolean @default(true) // 是否基于矫正月龄
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
   
   babyMilestones BabyMilestone[]
 
-  @@map("milestones")
+  @@map("Milestone")
 }
 
 model BabyMilestone {
-  id                        String    @id @default(cuid())
-  babyId                    String
-  milestoneId               String
-  achievedAt                DateTime?
-  correctedAgeAtAchievement Int?      // 达成时的矫正月龄(天数)
-  createdAt                 DateTime  @default(now())
+  id          String    @id @default(cuid())
+  babyId      String
+  milestoneId String
+  completed   Boolean   @default(false)
+  completedAt DateTime?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   baby      Baby      @relation(fields: [babyId], references: [id], onDelete: Cascade)
   milestone Milestone @relation(fields: [milestoneId], references: [id], onDelete: Cascade)
 
   @@unique([babyId, milestoneId])
-  @@map("baby_milestones")
+  @@map("BabyMilestone")
 }
