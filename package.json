@@ -48,6 +48,10 @@
     "react-hook-form": "^7.62.0",
     "zod": "^4.0.17"
   },
+  "engines": {
+    "node": ">=18.17.0",
+    "npm": ">=9.0.0"
+  },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@next/bundle-analyzer": "^15.5.0",
