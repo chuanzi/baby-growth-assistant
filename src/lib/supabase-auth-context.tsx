@@ -63,16 +63,23 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
     // 监听认证状态变化
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
-        console.log('Auth state changed:', event);
+        console.log('Auth state changed:', event, session ? 'Session exists' : 'No session');
         
         if (event === 'SIGNED_IN' && session?.user) {
+          console.log('User signed in successfully:', session.user.email);
           setSupabaseUser(session.user);
           await loadUserData(session.user);
         } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
           setSupabaseUser(null);
           setUser(null);
         } else if (event === 'TOKEN_REFRESHED' && session?.user) {
+          console.log('Token refreshed');
           setSupabaseUser(session.user);
+        } else if (event === 'PASSWORD_RECOVERY') {
+          console.log('Password recovery initiated');
+        } else {
+          console.log('Auth event without session:', event);
         }
         
         setLoading(false);
@@ -126,7 +133,7 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${baseUrl}/dashboard`,
+        redirectTo: `${baseUrl}/auth/google/callback`,
         queryParams: {
           access_type: 'offline',
           prompt: 'consent'
