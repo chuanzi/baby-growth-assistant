@@ -128,7 +128,7 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
       (typeof window !== 'undefined' 
         ? window.location.origin 
-        : 'https://baby-growth-assistant-28z33uaja-chuanzis-projects.vercel.app');
+        : 'https://baby-growth-assistant.vercel.app');
     
     const { error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
@@ -171,7 +171,7 @@ export function SupabaseAuthProvider({ children }: SupabaseAuthProviderProps) {
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 
       (typeof window !== 'undefined' 
         ? window.location.origin 
-        : 'https://baby-growth-assistant-28z33uaja-chuanzis-projects.vercel.app');
+        : 'https://baby-growth-assistant.vercel.app');
 
     const { error } = await supabase.auth.signUp({
       email,
